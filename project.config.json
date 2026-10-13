@@ -1,0 +1,145 @@
+{
+  "miniprogramRoot": "",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "projectname": "Pour Notes",
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "uglifyFileName": false,
+    "enhance": true,
+    "packNpmRelationList": [],
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "useCompilerPlugins": false,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "enableEngineNative": false,
+    "useIsolateContext": true,
+    "minifyWXML": true,
+    "compileWorklet": false,
+    "uploadWithSourceMap": false,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "compileHotReLoad": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
+  },
+  "compileType": "miniprogram",
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": ".agents",
+        "type": "folder"
+      },
+      {
+        "value": "tmp",
+        "type": "folder"
+      },
+      {
+        "value": "cloud-data",
+        "type": "folder"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": "pnpm-lock.yaml",
+        "type": "file"
+      },
+      {
+        "value": "miniprogram_npm/@paddle-js-models/ocr/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "miniprogram_npm/@paddlejs/paddlejs-core/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "miniprogram_npm/@paddlejs/paddlejs-backend-webgl/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "ocr/miniprogram_npm/@paddle-js-models/ocr/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "ocr/miniprogram_npm/@paddlejs/paddlejs-core/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "ocr/miniprogram_npm/@paddlejs/paddlejs-backend-webgl/index.js.map",
+        "type": "file"
+      },
+      {
+        "value": "ocr/miniprogram_npm",
+        "type": "folder"
+      },
+      {
+        "value": "ocr/runtime",
+        "type": "folder"
+      },
+      {
+        "value": "cloudrun",
+        "type": "folder"
+      },
+      {
+        "value": "cloudfunctions",
+        "type": "folder"
+      },
+      {
+        "value": "project.private.config.json",
+        "type": "file"
+      },
+      {
+        "value": ".DS_Store",
+        "type": "file"
+      },
+      {
+        "value": "assets/.DS_Store",
+        "type": "file"
+      },
+      {
+        "value": "pages/.DS_Store",
+        "type": "file"
+      },
+      {
+        "value": "assets/bean-thumbnails-jpg",
+        "type": "folder"
+      },
+      {
+        "value": "assets/roasters",
+        "type": "folder"
+      },
+      {
+        "value": "assets/drippers",
+        "type": "folder"
+      },
+      {
+        "value": "assets/buying-guide",
+        "type": "folder"
+      }
+    ],
+    "include": []
+  },
+  "appid": "wx1f76c922f2a6c522",
+  "editorSetting": {},
+  "libVersion": "latest"
+}

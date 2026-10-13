@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# 依赖与构建产物
+node_modules/
+__pycache__/
+*.pyc
+
+# 微信开发者工具的个人本地配置
+project.private.config.json
+
+# 临时文件
+tmp/
+
+# 云托管部署包（由 cloudrun/paddleocr 打包生成）
+paddleocr-cloudbase-v*.zip
