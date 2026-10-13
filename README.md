@@ -87,7 +87,7 @@ flowchart LR
 | 拍照识别 | `cloudrun/paddleocr/`、`data/bean-ocr-cloud.js`、`data/bean-ocr-parser.js`、`scripts/test-bean-ocr-parser.js`、`scripts/paddleocr-smoke-test.py` | 改识别服务或字段解析规则 |
 | 端侧 OCR（已停用） | `ocr/`、`scripts/strip-miniprogram-sourcemaps.sh` | 旧的 Paddle.js 方案，仅留档，不参与打包 |
 | 工程配置 | `project.config.json`、`data/cloud-config.js`、`sitemap.json`、`package.json` | 改打包排除规则、云环境 ID、服务名、版本号 |
-| 文档与预览图 | `README.md`、`CLOUD_SETUP.md`、`PADDLE_OCR_SETUP.md`、`docs/screenshots/` | 更新说明或换预览图。`docs/` 已排除出代码包 |
+| 文档与预览图 | `README.md`、`docs/CLOUD_SETUP.md`、`docs/PADDLE_OCR_SETUP.md`、`docs/screenshots/` | 更新说明或换预览图。`docs/` 已排除出代码包 |
 
 ### 常用脚本
 
@@ -107,8 +107,8 @@ node scripts/test-bean-ocr-parser.js
 
 | 文档 | 内容 |
 | --- | --- |
-| [CLOUD_SETUP.md](CLOUD_SETUP.md) | 云存储图片上传、豆单数据库导入、云函数部署、整体验收 |
-| [PADDLE_OCR_SETUP.md](PADDLE_OCR_SETUP.md) | PaddleOCR 云托管部署、存储安全规则、隐私配置、常见错误 |
+| [CLOUD_SETUP.md](docs/CLOUD_SETUP.md) | 云存储图片上传、豆单数据库导入、云函数部署、整体验收 |
+| [PADDLE_OCR_SETUP.md](docs/PADDLE_OCR_SETUP.md) | PaddleOCR 云托管部署、存储安全规则、隐私配置、常见错误 |
 
 当前线上环境：AppID `wx1f76c922f2a6c522`，CloudBase 环境 `pour-notes-d8gg2pilacb585b96`。
 
@@ -117,7 +117,7 @@ node scripts/test-bean-ocr-parser.js
 
 - `node_modules/`：只服务于已停用的端侧 OCR。`package.json` 没有声明这些依赖，重装需手动安装 `@paddle-js-models/ocr@4.1.1`、`@paddlejs/paddlejs-core@2.2.0`、`@paddlejs/paddlejs-backend-webgl@1.2.9`、`js-clipper@1.0.1`、`number-precision@1.6.0`、`d3-polygon@3.0.1`。
 - `project.private.config.json`：微信开发者工具的个人本地设置。
-- `paddleocr-cloudbase-v*.zip`：`cloudrun/paddleocr` 的部署包，最新一版与该目录内容一致。
+- `paddleocr-cloudbase-v*.zip`：`cloudrun/paddleocr` 的部署包，只保留最新一版，与该目录内容一致。
 
 </details>
 
