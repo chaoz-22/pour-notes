@@ -1,0 +1,174 @@
+<template name="flavor-page">
+  <view class="flavor-inline-content has-fixed-add-action">
+    <view class="flavor-search">
+      <view class="search-icon"></view>
+      <input value="{{query}}" placeholder="搜索风味" placeholder-class="search-placeholder" bindinput="onFlavorSearchInput" confirm-type="search" />
+      <view wx:if="{{query}}" class="search-clear" bindtap="clearFlavorSearch">×</view>
+    </view>
+
+    <view wx:if="{{query}}" class="search-panel">
+      <view class="search-summary">
+        <text>搜索结果</text>
+        <text>{{searchResults.length}} 项</text>
+      </view>
+      <view wx:if="{{searchResults.length}}" class="search-result-list">
+        <view wx:for="{{searchResults}}" wx:key="id" class="search-result" style="{{item.resultStyle}}" data-id="{{item.categoryId}}" bindtap="openFlavorSearchResult">
+          <view class="search-result-dot"></view>
+          <view class="search-result-copy">
+            <text>{{item.name}}</text>
+            <text>{{item.english}} · {{item.categoryName}} / {{item.groupName}}</text>
+          </view>
+          <text class="search-result-arrow">›</text>
+        </view>
+      </view>
+      <view wx:else class="search-empty">未找到对应的 SCA 标准风味词</view>
+    </view>
+
+    <block wx:elif="{{view === 'overview'}}">
+      <view class="flavor-mosaic">
+        <view wx:for="{{categories}}" wx:key="id" class="flavor-category-card flavor-card-{{item.id}}" style="{{item.cardStyle}}" hover-class="flavor-category-card-hover" hover-stay-time="100" data-id="{{item.id}}" bindtap="openFlavorCategory">
+          <view class="flavor-card-top">
+            <view>
+              <text class="flavor-card-title">{{item.shortName || item.name}}</text>
+              <text class="flavor-card-english">{{item.english}}</text>
+            </view>
+            <view class="flavor-card-dot"></view>
+          </view>
+          <text wx:if="{{item.id === 'fruity'}}" class="flavor-card-description">{{item.description}}</text>
+          <view class="flavor-card-meta">
+            <view class="flavor-card-line"></view>
+            <view class="flavor-card-count"><text class="sparkle">✦</text><text>{{item.count}} 个词条</text></view>
+          </view>
+        </view>
+      </view>
+      <view class="flavor-standard-note">
+        <text>SCA / WCR</text>
+        <text>从中心大类向外探索，描述会逐级变得更具体。</text>
+      </view>
+    </block>
+
+    <block wx:elif="{{view === 'category' && activeCategory}}">
+      <view class="secondary-mosaic secondary-count-{{activeCategory.groupCount}} secondary-category-{{activeCategory.id}}" style="--accent:{{activeCategory.color}};--soft:{{activeCategory.softColor}};">
+        <view class="secondary-parent-card" hover-class="flavor-category-card-hover" bindtap="flavorGoBack">
+          <view class="secondary-parent-top">
+            <text>{{activeCategory.name}}</text>
+            <text class="secondary-return-arrow">↖</text>
+          </view>
+          <text>{{activeCategory.english}}</text>
+        </view>
+        <view wx:for="{{activeCategory.groups}}" wx:key="english" class="secondary-card secondary-card-{{index}}" hover-class="flavor-category-card-hover" data-index="{{index}}" bindtap="openFlavorGroup">
+          <view class="secondary-card-top">
+            <view>
+              <text class="secondary-card-title">{{item.name}}</text>
+              <text class="secondary-card-english">{{item.english}}</text>
+            </view>
+            <view class="secondary-card-dot"></view>
+          </view>
+          <text wx:if="{{index === activeCategory.groupCount - 1}}" class="secondary-card-description">{{item.description}}</text>
+          <view class="secondary-card-meta">
+            <view></view>
+            <text><text>✦</text> {{item.count}} 个词条</text>
+          </view>
+        </view>
+      </view>
+      <view class="flavor-standard-note">
+        <text>{{activeCategory.english}}</text>
+        <text>选择一个二级类目，继续查看 SCA 标准描述词。</text>
+      </view>
+    </block>
+
+    <block wx:elif="{{view === 'group' && activeCategory && activeGroup}}">
+      <view class="third-level-grid third-category-{{activeCategory.id}}" style="--accent:{{activeCategory.color}};--soft:{{activeCategory.softColor}};">
+        <view class="third-parent-card" hover-class="flavor-category-card-hover" bindtap="flavorGoBack">
+          <view>
+            <text>{{activeGroup.name}}</text>
+            <text>↖</text>
+          </view>
+          <text>{{activeGroup.english}}</text>
+        </view>
+        <view wx:for="{{activeGroup.flavors}}" wx:key="id" class="third-flavor-card" hover-class="flavor-category-card-hover" data-index="{{index}}" bindtap="openFlavorDetail">
+          <view class="third-flavor-dot"></view>
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </block>
+
+  </view>
+</template>
+
+<template name="flavor-detail-layer">
+  <view wx:if="{{activeFlavor}}" class="flavor-detail-mask" catchtap="closeFlavorDetail">
+    <view class="flavor-detail-sheet" style="{{activeFlavor.detailStyle}}" catchtap="preventBubble">
+      <view class="flavor-detail-handle"></view>
+      <view class="flavor-detail-hero">
+        <view class="flavor-detail-dot"></view>
+        <text class="flavor-detail-name">{{activeFlavor.name}}</text>
+        <view class="flavor-detail-path"><text>{{activeFlavor.english}}</text><text>·</text><text>{{activeFlavor.groupName}}</text></view>
+      </view>
+      <view class="flavor-detail-body">
+        <view class="flavor-description-card">
+          <view class="flavor-description-icon">☕</view>
+          <view>
+            <text>风味描述</text>
+            <text>{{activeFlavor.description}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<template name="flavor-add-page">
+  <view wx:if="{{addOpen}}" class="flavor-add-page">
+    <view class="flavor-add-header">
+      <view class="flavor-add-back" hover-class="flavor-add-back-hover" aria-label="返回" bindtap="cancelFlavorAdd">
+        <image src="../../assets/icons/back-arrow.png" mode="aspectFit"></image>
+      </view>
+      <text class="flavor-add-title">新增风味</text>
+    </view>
+
+    <scroll-view class="flavor-add-scroll" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="flavor-add-form">
+        <text class="flavor-add-section-label">所属大类</text>
+        <scroll-view class="flavor-add-options-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <view class="flavor-add-options-row">
+            <view wx:for="{{categories}}" wx:key="id" class="flavor-add-option {{addForm.categoryId === item.id ? 'is-active' : ''}}" style="{{item.cardStyle}}" data-id="{{item.id}}" bindtap="selectFlavorAddCategory">
+              <view class="flavor-add-option-dot"></view>
+              <text>{{item.name}}</text>
+            </view>
+          </view>
+        </scroll-view>
+
+        <text class="flavor-add-section-label flavor-add-group-label">所属族群</text>
+        <scroll-view class="flavor-add-options-scroll" style="{{addStyle}}" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <view class="flavor-add-options-row">
+            <view wx:for="{{addGroups}}" wx:key="english" class="flavor-add-option flavor-add-group-option {{addForm.groupEnglish === item.english ? 'is-active' : ''}}" data-english="{{item.english}}" bindtap="selectFlavorAddGroup">
+              <view class="flavor-add-option-dot"></view>
+              <text>{{item.name}}</text>
+            </view>
+          </view>
+        </scroll-view>
+
+        <text class="flavor-add-info-title">风味信息</text>
+
+        <view class="flavor-add-field">
+          <text>风味名称</text>
+          <input value="{{addForm.name}}" data-field="name" maxlength="24" placeholder="如：蔓越莓" placeholder-class="flavor-add-placeholder" bindinput="onFlavorAddInput" />
+        </view>
+
+        <view class="flavor-add-field">
+          <text>英文名称（可选）</text>
+          <input value="{{addForm.english}}" data-field="english" maxlength="48" placeholder="如：Cranberry" placeholder-class="flavor-add-placeholder" bindinput="onFlavorAddInput" />
+        </view>
+
+        <view class="flavor-add-field">
+          <text>描述</text>
+          <textarea value="{{addForm.description}}" data-field="description" maxlength="180" placeholder="描述这个风味的香气、味觉或口感特征" placeholder-class="flavor-add-placeholder" bindinput="onFlavorAddInput"></textarea>
+          <text class="flavor-add-counter">{{addForm.description.length}} / 180</text>
+        </view>
+
+        <view class="flavor-add-submit {{addCanSave ? 'is-enabled' : ''}}" hover-class="{{addCanSave ? 'flavor-add-submit-hover' : 'none'}}" bindtap="saveFlavorAdd">保存风味</view>
+      </view>
+    </scroll-view>
+  </view>
+</template>

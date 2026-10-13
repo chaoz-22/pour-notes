@@ -1,0 +1,109 @@
+<template name="roaster-bean-detail">
+  <view class="roaster-bean-detail-view">
+    <view class="bean-detail-hero">
+      <view class="bean-detail-hero-image">
+        <image wx:if="{{detail.image}}" src="{{detail.image}}" mode="aspectFit" lazy-load="{{true}}" data-id="{{detail.id}}" data-source="{{detail.cloudImage}}" bindload="handleRoasterGuideImageLoad" />
+        <view wx:else class="bean-detail-image-placeholder"><view class="bean-detail-image-loading"></view></view>
+      </view>
+      <view class="bean-detail-hero-copy">
+        <text wx:if="{{detail.heroMeta}}" class="bean-detail-kicker">{{detail.heroMeta}}</text>
+        <text class="bean-detail-name">{{detail.name}}</text>
+        <text class="bean-detail-summary">{{detail.id == 'coffee-collective-mulugeta-washed' ? '优雅、干净、甜感好' : detail.summary}}</text>
+      </view>
+    </view>
+
+    <view wx:for="{{detail.detailSections}}" wx:key="id" class="bean-detail-section {{item.isRecipe ? 'bean-detail-recipe-section' : ''}}">
+      <text class="bean-detail-section-title {{item.id == 'producer' ? 'bean-detail-story-section-title' : ''}}">{{item.isRecipe ? '烘培商建议冲煮方案' : (item.id == 'info' ? '豆子信息' : item.title)}}</text>
+
+      <view wx:if="{{item.isChips}}" class="bean-detail-chip-row">
+        <text wx:for="{{item.items}}" wx:for-item="chip" wx:key="*this" class="bean-detail-chip">{{chip}}</text>
+      </view>
+
+      <view wx:if="{{item.isRows}}" class="bean-detail-info-list">
+        <view wx:for="{{item.rows}}" wx:for-item="row" wx:key="label" class="bean-detail-info-row">
+          <text class="bean-detail-info-label">{{row.label}}</text>
+          <text class="bean-detail-info-value">{{row.value}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{item.isBlocks}}" class="bean-detail-producer-list">
+        <view wx:for="{{item.blocks}}" wx:for-item="block" wx:key="title" class="bean-detail-producer-block">
+          <text class="bean-detail-producer-title">{{block.title}}</text>
+          <text class="bean-detail-paragraph">{{block.text}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{item.isParagraphs}}" class="bean-detail-paragraph-list">
+        <view wx:for="{{item.paragraphs}}" wx:for-item="paragraph" wx:key="id" class="bean-detail-story-block">
+          <text class="bean-detail-paragraph">{{paragraph.text}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{item.isRecipe && detail.roasterRecipeDisplay}}" class="bean-detail-roaster-recipe">
+        <view class="recipe-card bean-detail-library-recipe-card">
+          <view class="recipe-readonly-info-list">
+            <view><text>滤杯</text><text>{{detail.roasterRecipeDisplay.dripperText}}</text></view>
+            <view><text>粉量</text><text>{{detail.roasterRecipeDisplay.dose}}g</text></view>
+            <view><text>注水量</text><text>{{detail.roasterRecipeDisplay.water}}g</text></view>
+            <view><text>粉水比</text><text>{{detail.roasterRecipeDisplay.ratioText}}</text></view>
+            <view><text>水温</text><text>{{detail.roasterRecipeDisplay.temperatureDisplay}}</text></view>
+            <view><text>磨豆机</text><text>{{detail.roasterRecipeDisplay.grinderText}}</text></view>
+            <view><text>研磨度</text><text>{{detail.roasterRecipeDisplay.grindSizeText}}</text></view>
+            <view><text>水质</text><text>{{detail.roasterRecipeDisplay.waterQualityText}}</text></view>
+            <view><text>滤纸</text><text>{{detail.roasterRecipeDisplay.filterPaperText}}</text></view>
+            <view><text>时间</text><text>{{detail.roasterRecipeDisplay.totalTimeText}}</text></view>
+          </view>
+          <view wx:if="{{detail.roasterRecipeDisplay.targetText}}" class="bean-detail-recipe-note">
+            <text class="bean-detail-recipe-note-label">备注</text>
+            <text class="bean-detail-recipe-note-value">{{detail.roasterRecipeDisplay.targetText}}</text>
+          </view>
+          <view class="recipe-bar-preview">
+            <view class="recipe-bar-heading">
+              <text>冲煮方案预览</text>
+              <text>累计水量(G)</text>
+            </view>
+            <view class="recipe-line-chart">
+              <view class="recipe-line-plot">
+                <view class="recipe-line-axis"></view>
+                <view wx:for="{{detail.roasterRecipeDisplay.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-guide" style="{{point.guideStyle}}"></view>
+                <view wx:for="{{detail.roasterRecipeDisplay.timelineSegments}}" wx:for-item="segment" wx:key="id" class="recipe-line-segment" style="{{segment.style}}"></view>
+                <view wx:for="{{detail.roasterRecipeDisplay.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-dot" style="{{point.style}}"></view>
+                <block wx:for="{{detail.roasterRecipeDisplay.timelinePoints}}" wx:for-item="point" wx:key="id">
+                  <text wx:if="{{point.timeText}}" class="recipe-line-time {{point.edgeClass}}" style="{{point.timeLabelStyle}}">{{point.timeText}}</text>
+                </block>
+                <view wx:for="{{detail.roasterRecipeDisplay.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-water-label {{point.edgeClass}}" style="{{point.waterLabelStyle}}">{{point.waterText}}</view>
+              </view>
+            </view>
+          </view>
+          <view class="recipe-detail-steps-heading">冲煮步骤</view>
+          <view class="recipe-browse-steps">
+            <view wx:for="{{detail.roasterRecipeDisplay.stages}}" wx:key="id" class="recipe-browse-step">
+              <view class="recipe-browse-step-copy">
+                <text class="recipe-browse-step-index">{{index + 1}}.</text>
+                <text class="recipe-browse-step-instruction">{{item.instructionText}}</text>
+              </view>
+              <view class="recipe-browse-step-meta">
+                <text class="recipe-browse-step-time">{{item.rangeText}}</text>
+                <view class="recipe-browse-step-values">
+                  <text class="recipe-browse-step-water">{{item.cumulativeWater}}g</text>
+                  <text class="recipe-browse-step-temperature">{{item.temperatureDisplay}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="recipe-card-actions recipe-browse-actions">
+            <button class="primary-button" catchtap="applyRoasterRecipe">使用方案</button>
+          </view>
+        </view>
+      </view>
+
+      <text wx:if="{{item.isText}}" class="bean-detail-paragraph">{{item.text}}</text>
+    </view>
+
+    <view class="bean-detail-add-row" hover-class="bean-detail-add-row-hover" hover-stay-time="120" bindtap="startAddBeanFromRoasterDetail">
+      <view class="bean-detail-add-copy-wrap">
+        <text class="bean-detail-add-title">加入豆仓</text>
+      </view>
+    </view>
+  </view>
+</template>
