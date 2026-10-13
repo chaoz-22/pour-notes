@@ -62,11 +62,14 @@ def backup_beans(beans: list[dict]) -> Path:
 
 
 def link_sources(result: dict) -> int:
-    """给已对上、但还没记官网链接的豆子补上链接和信息指纹，不动其他内容。"""
+    """给已对上、但还没记官网链接的豆子补上链接和信息指纹，不动其他内容。
+
+    人工在控制台只填了 sourceUrl 的豆子，这里会替它补上指纹。
+    """
     linked = 0
     for pair in result["listed"] + result["sold_out"]:
         bean, item = pair["bean"], pair["item"]
-        if bean.get("sourceUrl"):
+        if bean.get("sourceUrl") and bean.get("sourceHash"):
             continue
         cloudbase.update_bean(bean["_id"], {"sourceUrl": item["url"], "sourceHash": item["source_hash"]})
         linked += 1
@@ -131,7 +134,8 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
             ("库内但官网已售罄", [_pair_line(pair) for pair in result["sold_out"]]),
             ("库内但官网找不到（可能已下架，或名字对不上）",
              [f"- {bean['name']}（`{bean['id']}`）" for bean in result["missing"]]),
-            ("待确认的匹配（名字相近，但没完全对上，或处理法、品种不一致）", [_pair_line(pair) for pair in result["uncertain"]]),
+            ("待确认的匹配（名字相近但没完全对上；是同一款就把豆子的 sourceUrl 填成官网链接，不是就填 -）",
+             [_pair_line(pair) for pair in result["uncertain"]]),
             ("在售且已收录", [_pair_line(pair) for pair in result["listed"]]),
         ]
         for title, rows in sections:
