@@ -84,6 +84,7 @@ flowchart LR
 | 界面图标 | `assets/icons/` | 随代码包发布的图标与分享封面 |
 | 云端内容图片 | `assets/roasters/`、`assets/bean-thumbnails-jpg/`、`assets/drippers/`、`assets/buying-guide/` | 不进代码包，需手动上传到云存储 `roaster-guide/`，路径与本地一致 |
 | 云端豆单 | `cloudfunctions/roasterCatalog/`、`cloud-data/`、`scripts/export-roaster-catalog.js` | 改豆单读取逻辑，或重新生成数据库导入文件 |
+| 豆单同步 | `sync/`、`.github/workflows/roaster-sync.yml` | 每周从烘焙商官网上新手冲豆、更新已有豆子的信息。在 `sync/roasters.py` 里增删烘焙商或调整筛选规则 |
 | 拍照识别 | `cloudrun/paddleocr/`、`data/bean-ocr-cloud.js`、`data/bean-ocr-parser.js`、`scripts/test-bean-ocr-parser.js`、`scripts/paddleocr-smoke-test.py` | 改识别服务或字段解析规则 |
 | 端侧 OCR（已停用） | `ocr/`、`scripts/strip-miniprogram-sourcemaps.sh` | 旧的 Paddle.js 方案，仅留档，不参与打包 |
 | 工程配置 | `project.config.json`、`data/cloud-config.js`、`sitemap.json`、`package.json` | 改打包排除规则、云环境 ID、服务名、版本号 |
@@ -96,6 +97,20 @@ flowchart LR
 ```bash
 node scripts/export-roaster-catalog.js
 ```
+
+对比官网和数据库的豆单，生成差异报告（只读，不改数据库；报告写到 `sync/reports/latest.md`）：
+
+```bash
+python3 sync/run.py
+```
+
+把某一家的新豆上线并更新已有豆子（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY` 和 `ANTHROPIC_API_KEY`：
+
+```bash
+python3 sync/run.py --roaster Sey --apply
+```
+
+GitHub Actions 每周一自动对全部已接入的烘焙商执行一次 `--apply`，两把密钥放在仓库的 Secrets 里。售罄和下架不自动处理，在控制台把对应豆子的 `enabled` 改成 `false` 即可下架。
 
 改完豆袋字段解析规则后，跑一遍解析测试：
 

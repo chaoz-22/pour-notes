@@ -1,0 +1,58 @@
+name: 寻豆指南同步
+
+on:
+  schedule:
+    - cron: "0 0 * * 1" # 每周一 08:00（北京时间）
+  workflow_dispatch:
+    inputs:
+      roaster:
+        description: 只同步某一家烘焙商（留空则同步全部）
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roaster-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sync/requirements.txt
+
+      - run: pip install -r sync/requirements.txt
+
+      - name: 上新并更新豆单
+        env:
+          CLOUDBASE_API_KEY: ${{ secrets.CLOUDBASE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ROASTER: ${{ inputs.roaster }}
+        run: |
+          if [ -n "$ROASTER" ]; then
+            python sync/run.py --apply --roaster "$ROASTER"
+          else
+            python sync/run.py --apply
+          fi
+
+      - name: 把报告贴到运行摘要
+        if: always()
+        run: |
+          if [ -f sync/reports/latest.md ]; then cat sync/reports/latest.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: 保存写库前的备份
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beans-backup
+          path: sync/backups/
+          if-no-files-found: ignore
+          retention-days: 30
