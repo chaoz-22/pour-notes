@@ -80,7 +80,7 @@ flowchart LR
 | 分类 | 路径 | 什么时候改 |
 | --- | --- | --- |
 | 小程序界面 | `pages/index/`、`templates/`、`app.js`、`app.json`、`app.wxss` | 改页面、交互、样式。所有功能都在 `pages/index` 单页内 |
-| 内置数据 | `data/roasters.js`、`data/roaster-beans.js`、`data/preset-recipes.js`、`data/sca-flavors.js`、`data/audio-assets.js` | 增删烘焙商、豆单、预设方案、风味词、提示音 |
+| 内置数据 | `data/roasters.js`、`data/roaster-beans.js`、`data/roaster-bean-filters.js`、`data/preset-recipes.js`、`data/sca-flavors.js`、`data/audio-assets.js` | 增删烘焙商、豆单、豆单筛选项（常见豆种、处理法分类）、预设方案、风味词、提示音 |
 | 界面图标 | `assets/icons/` | 随代码包发布的图标与分享封面 |
 | 云端内容图片 | `assets/roasters/`、`assets/bean-thumbnails-jpg/`、`assets/drippers/`、`assets/buying-guide/` | 不进代码包，需手动上传到云存储 `roaster-guide/`，路径与本地一致 |
 | 云端豆单 | `cloudfunctions/roasterCatalog/`、`cloud-data/`、`scripts/export-roaster-catalog.js` | 改豆单读取逻辑，或重新生成数据库导入文件 |
@@ -101,6 +101,12 @@ node scripts/export-roaster-catalog.js
 
 ```bash
 node scripts/test-bean-ocr-parser.js
+```
+
+改完寻豆指南的筛选规则后，跑一遍筛选测试：
+
+```bash
+node scripts/test-roaster-bean-filters.js
 ```
 
 ## 部署

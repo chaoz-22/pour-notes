@@ -2,6 +2,14 @@
 const { parseBeanOcrLines } = require("../../data/bean-ocr-parser");
 const { getErrorMessage, recognizeBeanLabelPhoto } = require("../../data/bean-ocr-cloud");
 const { getDecoratedSCAFlavorCategories } = require("../../data/sca-flavors");
+const {
+  ROASTER_BEAN_FILTER_FIELDS,
+  freshRoasterBeanFilters,
+  getRoasterBeanFilterValues,
+  normalizeRoasterBeanFilters,
+  buildRoasterBeanFilterGroups,
+  countRoasterBeanFilters
+} = require("../../data/roaster-bean-filters");
 
 let roasterBeansModule = null;
 let audioAssetsModule = null;
@@ -23,150 +31,6 @@ function getRoasterBeans(roasterName) {
     cachedRoasterBeanLists[roasterName] = getRoasterBeansModule().getRoasterBeans(roasterName);
   }
   return cachedRoasterBeanLists[roasterName];
-}
-
-function freshRoasterBeanFilters() {
-  return { variety: [], process: [], country: [] };
-}
-
-// Prefer a Chinese name only when the catalog already provides one; otherwise keep English.
-const ROASTER_BEAN_VARIETY_FILTER_ALIASES = Object.freeze({
-  "74158 库鲁梅": "74158",
-  "74158 库儒梅": "74158",
-  "jarc 74158": "74158",
-  kurume: "74158",
-  库鲁梅: "74158",
-  库儒梅: "74158",
-  catuai: "卡杜艾",
-  gesha: "瑰夏",
-  geisha: "瑰夏",
-  "gesha 1931": "瑰夏",
-  "瑰夏1931": "瑰夏",
-  pacamara: "帕卡马拉",
-  "wush wush": "Wush Wush",
-  batian: "巴蒂安",
-  ruiru: "Ruiru 11",
-  "ruiru 11": "Ruiru 11",
-  "ruiru 11 peaberry": "Ruiru 11",
-  鲁伊鲁: "Ruiru 11",
-  鲁伊鲁11: "Ruiru 11",
-  "sl-28": "SL28",
-  "sl-34": "SL34",
-  "heirloom原生种": "原生种",
-  "ethiopian landrace": "原生种",
-  埃塞俄比亚原生种: "原生种",
-  原生种: "原生种",
-  原生品种: "原生种",
-  "field blend": "混合品种",
-  chiroso: "Chiroso",
-  caturra: "Caturra",
-  "variedad colombia": "哥伦比亚",
-  哥伦比亚: "哥伦比亚",
-  castillo: "Castillo",
-  "typica mejorado": "改良铁皮卡",
-  "typica mejorado（改良铁皮卡）": "改良铁皮卡",
-  sidra: "Sidra",
-  laurina: "Laurina",
-  "bourbon pointu": "Laurina",
-  "laurina（bourbon pointu）": "Laurina",
-  ombligon: "Ombligon",
-  wolisho: "Wolisho",
-  "wolisho 原生品种": "Wolisho",
-  mandela: "Mandela",
-  marshell: "Marshell",
-  tabi: "Tabi"
-});
-
-function normalizeRoasterBeanVarietyFilterValue(value) {
-  const text = String(value || "").trim().replace(/\s+/g, " ");
-  if (!text) return "";
-  const slCode = text.match(/^SL[\s-]*(\d+)$/i);
-  if (slCode) return `SL${slCode[1]}`;
-  const alias = ROASTER_BEAN_VARIETY_FILTER_ALIASES[text.toLowerCase()];
-  return alias || text;
-}
-
-function normalizeRoasterBeanVarietyFilterCombination(value) {
-  return Array.from(new Set(
-    String(value || "")
-      .split(/[、，,;/；]+/)
-      .map(normalizeRoasterBeanVarietyFilterValue)
-      .filter(Boolean)
-  )).join("、");
-}
-
-function normalizeRoasterBeanProcessFilterValue(value) {
-  const text = String(value || "").trim().replace(/\s+/g, " ");
-  if (!text) return "";
-  if (text === "果肉日晒" || text === "经典日晒") return "日晒";
-  if (text === "经典水洗" || text === "水洗（15小时发酵）") return "水洗";
-  return text;
-}
-
-function getRoasterBeanFilterValues(bean, field) {
-  const rawValue = String(bean && bean[field] || "").trim();
-  if (!rawValue) return [];
-  if (field === "process") {
-    const normalizedProcess = normalizeRoasterBeanProcessFilterValue(rawValue);
-    return normalizedProcess ? [normalizedProcess] : [];
-  }
-  if (field === "variety") {
-    const normalizedCombination = normalizeRoasterBeanVarietyFilterCombination(rawValue);
-    return normalizedCombination ? [normalizedCombination] : [];
-  }
-  const values = rawValue
-    .split(/[、，,;/；]+/)
-    .map((value) => value.trim())
-    .filter(Boolean);
-  return values;
-}
-
-function normalizeRoasterBeanFilters(beans, filters) {
-  const source = filters && typeof filters === "object" ? filters : {};
-  return ROASTER_BEAN_FILTER_FIELDS.reduce((result, definition) => {
-    const availableValues = new Set();
-    beans.forEach((bean) => {
-      getRoasterBeanFilterValues(bean, definition.key).forEach((value) => availableValues.add(value));
-    });
-    result[definition.key] = Array.from(new Set(
-      (Array.isArray(source[definition.key]) ? source[definition.key] : [])
-        .map((value) => {
-          if (definition.key === "variety") return normalizeRoasterBeanVarietyFilterCombination(value);
-          if (definition.key === "process") return normalizeRoasterBeanProcessFilterValue(value);
-          return String(value || "").trim();
-        })
-        .filter((value) => availableValues.has(value))
-    ));
-    return result;
-  }, freshRoasterBeanFilters());
-}
-
-function buildRoasterBeanFilterGroups(beans, filters) {
-  const normalizedFilters = normalizeRoasterBeanFilters(beans, filters);
-  return ROASTER_BEAN_FILTER_FIELDS.map((definition) => {
-    const values = [];
-    const seen = new Set();
-    beans.forEach((bean) => {
-      getRoasterBeanFilterValues(bean, definition.key).forEach((value) => {
-        if (seen.has(value)) return;
-        seen.add(value);
-        values.push(value);
-      });
-    });
-    return {
-      ...definition,
-      options: values.map((value) => ({
-        value,
-        isSelected: normalizedFilters[definition.key].includes(value)
-      }))
-    };
-  });
-}
-
-function countRoasterBeanFilters(filters) {
-  return ROASTER_BEAN_FILTER_FIELDS.reduce((total, definition) => (
-    total + (Array.isArray(filters && filters[definition.key]) ? filters[definition.key].length : 0)
-  ), 0);
 }
 
 function normalizeRoasterBeanSearchText(value) {
@@ -352,11 +216,6 @@ const ROASTER_CATALOG_REFRESH_INTERVAL = 5 * 60 * 1000;
 const ROASTER_IMAGE_DOWNLOAD_CONCURRENCY = 3;
 const ROASTER_IMAGE_CACHE_FLUSH_DELAY = 180;
 const ROASTER_CATALOG_FUNCTION = "roasterCatalog";
-const ROASTER_BEAN_FILTER_FIELDS = [
-  { key: "variety", label: "豆种" },
-  { key: "process", label: "处理法" },
-  { key: "country", label: "国家" }
-];
 const SHARE_TITLE = "Pour Notes｜记录每一次手冲";
 const SHARE_PATH = "/pages/index/index";
 const SHARE_TIMELINE_QUERY = "source=timeline";
