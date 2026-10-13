@@ -14,3 +14,10 @@ tmp/
 
 # 云托管部署包（由 cloudrun/paddleocr 打包生成）
 paddleocr-cloudbase-v*.zip
+
+# 豆单同步的本地缓存与报告
+sync/.cache/
+sync/reports/
+sync/.env
+sync/backups/
+sync/.venv/

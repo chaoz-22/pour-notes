@@ -1,0 +1,111 @@
+"""用 Claude 把官网商品页整理成寻豆指南的中文豆子信息。"""
+
+from __future__ import annotations
+
+import html
+import json
+import re
+import urllib.request
+
+import anthropic
+from pydantic import BaseModel, Field
+
+from shopify import USER_AGENT
+
+MODEL = "claude-opus-5-5"
+MAX_PAGE_CHARS = 20000
+
+SYSTEM_PROMPT = """你在为一个手冲咖啡小程序的「寻豆指南」整理豆子资料。用户会给你一款咖啡豆在烘焙商官网上的页面文字，请据此填写这款豆子的中文资料卡。
+
+资料卡是给中文读者看的，他们想知道这支豆子从哪来、谁种的、怎么处理的、喝起来什么味道。所以：
+
+- 只写页面上有依据的内容。页面没提到的字段留空字符串（列表留空），不要凭常识补全，也不要推测海拔、采收期、价格这类具体数字。读者会拿这些信息去买豆子，编出来的细节比空着更糟。
+- 用自己的话写成通顺的中文，不要逐句翻译官网原文。
+- 人名、庄园名、处理站名、产区名、品种的专有名称保留官网的原文写法，不要音译；国家名和常见品种、处理法用中文通行译名（瑰夏、粉红波旁、水洗、日晒、蜜处理、厌氧日晒等）。
+- name 用这款豆子最核心的短名（通常是生产者或庄园名），不要带年份、国家、规格。
+- flavorNotes 用官网给出的风味词原文，每个单词首字母大写（如 Ripe Peach）；flavorText 是对应的中文，用顿号分隔。
+- 整体要精简，读者是在手机上快速浏览。只留对选豆有用的信息，不写客套话、不重复其他字段已经有的内容。
+- summary 用一句话描述杯中风味，不超过 25 个字。
+- producerStory 写 2 到 3 段，每段一两句：先讲产地和生产者，再讲这个批次或品种的特别之处。杯中风味已经在 summary 里，不用再单独写一段。
+- processingDetail 用一句话写清处理步骤；transparency 只在官网公布了收购价、FOB 等生豆价格信息时填写，不写零售价。
+
+下面的示例是同一家烘焙商已经整理好的资料卡，请沿用它们的用词习惯和各字段的写法。示例的故事部分篇幅偏长，你写的要比示例更短，以上面的篇幅要求为准。"""
+
+
+class BeanInfo(BaseModel):
+    name: str = Field(description="豆子短名，保留官网原文写法")
+    detailName: str = Field(description="更完整的名称；与 name 相同或没有必要时留空")
+    country: str = Field(description="产地国家，中文")
+    region: str = Field(description="产区，保留原文")
+    farmOrStation: str = Field(description="庄园或处理站")
+    producer: str = Field(description="生产者")
+    process: str = Field(description="处理法，中文")
+    variety: str = Field(description="品种；多个品种用顿号分隔")
+    altitude: str = Field(description="海拔，如 1900masl")
+    roast: str = Field(description="烘焙度，中文，如 浅烘")
+    harvest: str = Field(description="采收时间，如 2026年7月")
+    flavorNotes: list[str] = Field(description="官网风味词原文")
+    flavorText: str = Field(description="风味词的中文，用顿号分隔")
+    summary: str = Field(description="一句话的杯中风味描述")
+    producerStoryTitle: str = Field(description="故事小标题")
+    producerStory: list[str] = Field(description="产地与生产者故事，每个元素一个自然段")
+    processingDetail: str = Field(description="处理过程")
+    transparency: str = Field(description="价格透明度信息；官网没有则留空")
+
+
+class ExtractionError(RuntimeError):
+    pass
+
+
+def fetch_page_text(url: str) -> str:
+    """取商品页的可读文字。很多细节（海拔、处理过程、价格）只在页面上，不在商品接口里。"""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        page = response.read().decode("utf-8", "replace")
+    page = re.sub(r"<(script|style|noscript|svg|template)\b.*?</\1>", " ", page, flags=re.S | re.I)
+    text = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", page)).split())
+    if len(text) > MAX_PAGE_CHARS:
+        raise ExtractionError(f"商品页文字过长（{len(text)} 字），需要先为这家店单独处理：{url}")
+    return text
+
+
+def _example_cards(examples: list[dict]) -> str:
+    fields = list(BeanInfo.model_fields)
+    cards = [{field: bean.get(field) or ([] if field in ("flavorNotes", "producerStory") else "") for field in fields}
+             for bean in examples]
+    return "\n\n".join(json.dumps(card, ensure_ascii=False, indent=2) for card in cards)
+
+
+def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[dict]) -> dict:
+    """返回按 BeanInfo 填好的字段。examples 是同一家烘焙商已有的豆子，用来对齐写法。"""
+    client = anthropic.Anthropic()
+    system = SYSTEM_PROMPT
+    if examples:
+        system += "\n\n<examples>\n" + _example_cards(examples) + "\n</examples>"
+    user = (
+        f"烘焙商：{roaster_name}\n"
+        f"官网商品标题：{item['title']}\n"
+        f"商品页地址：{item['url']}\n\n"
+        f"<page_text>\n{page_text}\n</page_text>"
+    )
+    try:
+        # fallbacks：万一请求被安全分类器误拒，由服务端自动换模型重试
+        response = client.beta.messages.parse(
+            model=MODEL,
+            max_tokens=16000,
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+            system=system,
+            messages=[{"role": "user", "content": user}],
+            output_format=BeanInfo,
+        )
+    except anthropic.RateLimitError as error:
+        raise ExtractionError(f"Claude API 限流：{error.message}") from error
+    except anthropic.APIStatusError as error:
+        raise ExtractionError(f"Claude API 返回错误（{error.status_code}）：{error.message}") from error
+    except anthropic.APIConnectionError as error:
+        raise ExtractionError(f"连不上 Claude API：{error}") from error
+
+    if response.stop_reason != "end_turn" or response.parsed_output is None:
+        raise ExtractionError(f"没有得到完整结果（stop_reason={response.stop_reason}）：{item['title']}")
+    return response.parsed_output.model_dump()

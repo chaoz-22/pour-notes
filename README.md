@@ -80,14 +80,15 @@ flowchart LR
 | 分类 | 路径 | 什么时候改 |
 | --- | --- | --- |
 | 小程序界面 | `pages/index/`、`templates/`、`app.js`、`app.json`、`app.wxss` | 改页面、交互、样式。所有功能都在 `pages/index` 单页内 |
-| 内置数据 | `data/roasters.js`、`data/roaster-beans.js`、`data/preset-recipes.js`、`data/sca-flavors.js`、`data/audio-assets.js` | 增删烘焙商、豆单、预设方案、风味词、提示音 |
+| 内置数据 | `data/roasters.js`、`data/roaster-beans.js`、`data/roaster-bean-filters.js`、`data/preset-recipes.js`、`data/sca-flavors.js`、`data/audio-assets.js` | 增删烘焙商、豆单、豆单筛选项（常见豆种、处理法分类）、预设方案、风味词、提示音 |
 | 界面图标 | `assets/icons/` | 随代码包发布的图标与分享封面 |
 | 云端内容图片 | `assets/roasters/`、`assets/bean-thumbnails-jpg/`、`assets/drippers/`、`assets/buying-guide/` | 不进代码包，需手动上传到云存储 `roaster-guide/`，路径与本地一致 |
 | 云端豆单 | `cloudfunctions/roasterCatalog/`、`cloud-data/`、`scripts/export-roaster-catalog.js` | 改豆单读取逻辑，或重新生成数据库导入文件 |
+| 豆单同步 | `sync/`、`.github/workflows/roaster-sync.yml` | 每周从烘焙商官网上新手冲豆、更新已有豆子的信息。在 `sync/roasters.py` 里增删烘焙商或调整筛选规则 |
 | 拍照识别 | `cloudrun/paddleocr/`、`data/bean-ocr-cloud.js`、`data/bean-ocr-parser.js`、`scripts/test-bean-ocr-parser.js`、`scripts/paddleocr-smoke-test.py` | 改识别服务或字段解析规则 |
 | 端侧 OCR（已停用） | `ocr/`、`scripts/strip-miniprogram-sourcemaps.sh` | 旧的 Paddle.js 方案，仅留档，不参与打包 |
 | 工程配置 | `project.config.json`、`data/cloud-config.js`、`sitemap.json`、`package.json` | 改打包排除规则、云环境 ID、服务名、版本号 |
-| 文档与预览图 | `README.md`、`CLOUD_SETUP.md`、`PADDLE_OCR_SETUP.md`、`docs/screenshots/` | 更新说明或换预览图。`docs/` 已排除出代码包 |
+| 文档与预览图 | `README.md`、`docs/CLOUD_SETUP.md`、`docs/PADDLE_OCR_SETUP.md`、`docs/screenshots/` | 更新说明或换预览图。`docs/` 已排除出代码包 |
 
 ### 常用脚本
 
@@ -97,18 +98,38 @@ flowchart LR
 node scripts/export-roaster-catalog.js
 ```
 
+对比官网和数据库的豆单，生成差异报告（只读，不改数据库；报告写到 `sync/reports/latest.md`）：
+
+```bash
+python3 sync/run.py
+```
+
+把某一家的新豆上线并更新已有豆子（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY` 和 `ANTHROPIC_API_KEY`：
+
+```bash
+python3 sync/run.py --roaster Sey --apply
+```
+
+GitHub Actions 每周一自动对全部已接入的烘焙商执行一次 `--apply`，两把密钥放在仓库的 Secrets 里。售罄和下架不自动处理，在控制台把对应豆子的 `enabled` 改成 `false` 即可下架。
+
 改完豆袋字段解析规则后，跑一遍解析测试：
 
 ```bash
 node scripts/test-bean-ocr-parser.js
 ```
 
+改完寻豆指南的筛选规则后，跑一遍筛选测试：
+
+```bash
+node scripts/test-roaster-bean-filters.js
+```
+
 ## 部署
 
 | 文档 | 内容 |
 | --- | --- |
-| [CLOUD_SETUP.md](CLOUD_SETUP.md) | 云存储图片上传、豆单数据库导入、云函数部署、整体验收 |
-| [PADDLE_OCR_SETUP.md](PADDLE_OCR_SETUP.md) | PaddleOCR 云托管部署、存储安全规则、隐私配置、常见错误 |
+| [CLOUD_SETUP.md](docs/CLOUD_SETUP.md) | 云存储图片上传、豆单数据库导入、云函数部署、整体验收 |
+| [PADDLE_OCR_SETUP.md](docs/PADDLE_OCR_SETUP.md) | PaddleOCR 云托管部署、存储安全规则、隐私配置、常见错误 |
 
 当前线上环境：AppID `wx1f76c922f2a6c522`，CloudBase 环境 `pour-notes-d8gg2pilacb585b96`。
 
@@ -117,7 +138,7 @@ node scripts/test-bean-ocr-parser.js
 
 - `node_modules/`：只服务于已停用的端侧 OCR。`package.json` 没有声明这些依赖，重装需手动安装 `@paddle-js-models/ocr@4.1.1`、`@paddlejs/paddlejs-core@2.2.0`、`@paddlejs/paddlejs-backend-webgl@1.2.9`、`js-clipper@1.0.1`、`number-precision@1.6.0`、`d3-polygon@3.0.1`。
 - `project.private.config.json`：微信开发者工具的个人本地设置。
-- `paddleocr-cloudbase-v*.zip`：`cloudrun/paddleocr` 的部署包，最新一版与该目录内容一致。
+- `paddleocr-cloudbase-v*.zip`：`cloudrun/paddleocr` 的部署包，只保留最新一版，与该目录内容一致。
 
 </details>
 
