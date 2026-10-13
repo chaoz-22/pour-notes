@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="assets/icons/share-cover-optimized.png" alt="Pour Notes：精准量化每一次萃取" width="420">
-
 # Pour Notes
 
 **精准量化每一次萃取**
@@ -14,6 +12,12 @@
 ![Local first](https://img.shields.io/badge/个人数据-仅存本机-8A6D3B)
 
 [功能](#功能) · [架构](#架构) · [快速开始](#快速开始) · [项目结构](#项目结构) · [部署](#部署) · [致谢](#致谢)
+
+<br>
+
+<img src="docs/screenshots/home.png" alt="Pour Notes 首页：开始冲煮、冲煮记录、消耗统计、方案库、风味" width="48%">
+&nbsp;
+<img src="docs/screenshots/flavor.webp" alt="风味页：SCA 风味轮的 9 大类风味" width="48%">
 
 </div>
 
@@ -83,6 +87,7 @@ flowchart LR
 | 拍照识别 | `cloudrun/paddleocr/`、`data/bean-ocr-cloud.js`、`data/bean-ocr-parser.js`、`scripts/test-bean-ocr-parser.js`、`scripts/paddleocr-smoke-test.py` | 改识别服务或字段解析规则 |
 | 端侧 OCR（已停用） | `ocr/`、`scripts/strip-miniprogram-sourcemaps.sh` | 旧的 Paddle.js 方案，仅留档，不参与打包 |
 | 工程配置 | `project.config.json`、`data/cloud-config.js`、`sitemap.json`、`package.json` | 改打包排除规则、云环境 ID、服务名、版本号 |
+| 文档与预览图 | `README.md`、`CLOUD_SETUP.md`、`PADDLE_OCR_SETUP.md`、`docs/screenshots/` | 更新说明或换预览图。`docs/` 已排除出代码包 |
 
 ### 常用脚本
 
