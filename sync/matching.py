@@ -94,7 +94,7 @@ def match(beans: list[dict], items: list[dict], slug: str) -> dict:
             pairs.append({"bean": bean, "item": items[item_index], "confident": True})
 
     # 其余的按名字猜。已经填了 sourceUrl 的豆子不参与：链接对不上说明那个商品已下架，
-    # 不能再把它错配给别的商品。人工确认"官网没有这款"时把 sourceUrl 填成 "-" 即可。
+    # 不能再把它错配给别的商品。
     candidates = []
     for bean_index, bean in enumerate(beans):
         if bean_index in used_beans or bean.get("sourceUrl"):
