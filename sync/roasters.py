@@ -1,7 +1,8 @@
 """各烘焙商官网的抓取配置。
 
-目前只支持 Shopify 店铺：它们都公开了 /products.json。新增一家只需要在
-ROASTERS 里加一项，字段含义见第一项的注释。
+大多数是 Shopify 店铺，公开了 /products.json；platform 不填就是 Shopify。
+另外支持 WooCommerce 店铺（platform: "woocommerce"）和 Hatch 的自建网站
+（platform: "hatch"）。新增一家只需要在 ROASTERS 里加一项，字段含义见各段第一项的注释。
 
 只收手冲（Filter）豆，全能烘焙（Omni）也算；意式烘焙在 shopify.py 里统一排除。
 """
@@ -111,5 +112,35 @@ ROASTERS = [
         "slug": "lab-19",
         "host": "lab19coffee.com",
         "types": ["Coffee"],
+    },
+    {
+        "name": "Tanat",
+        "slug": "tanat",
+        "platform": "woocommerce",
+        "host": "tanat.coffee",
+        "categories": ["Filtre"],  # 商品属于其中任一分类才收；意式豆在 Espresso 分类里
+        "exclude_title": r"calendrier|coffret",
+    },
+    {
+        "name": "Dak",
+        "slug": "dak",
+        "platform": "woocommerce",
+        "host": "www.dakcoffeeroasters.com",
+        "categories": ["Filter"],
+        "exclude_title": r"steeped",
+    },
+    {
+        "name": "Peoplepossession",
+        "slug": "peoplepossession",
+        "platform": "woocommerce",
+        "host": "peoplepossession.com",
+        "categories": ["Coffee"],
+        "exclude_title": r"\bbags\b|reusable lid",
+    },
+    {
+        "name": "Hatch",
+        "slug": "hatch",
+        "platform": "hatch",
+        "categories": ["Seasonal", "Premium & Peak"],  # Foundation 系列的日常拼配不收
     },
 ]

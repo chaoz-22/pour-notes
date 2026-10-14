@@ -27,9 +27,17 @@ from datetime import datetime
 from pathlib import Path
 
 import cloudbase
+import hatch
+import shopify
+import woocommerce
 from matching import match
 from roasters import ROASTERS
-from shopify import list_coffees
+
+ADAPTERS = {
+    "shopify": shopify.list_coffees,
+    "woocommerce": woocommerce.list_coffees,
+    "hatch": hatch.list_coffees,
+}
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = ROOT / "cloud-data" / "roaster_guide_beans.json"
@@ -220,6 +228,7 @@ def main() -> int:
     results, failures = [], []
     for roaster in roasters:
         try:
+            list_coffees = ADAPTERS[roaster.get("platform", "shopify")]
             items = list_coffees(roaster, CACHE_DIR if args.cache else None)
         except Exception as error:  # 一家失败不影响其他家
             failures.append((roaster["name"], f"{type(error).__name__}: {error}"))

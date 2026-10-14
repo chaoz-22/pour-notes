@@ -11,7 +11,7 @@ import openai
 from openai import OpenAI
 from pydantic import BaseModel, Field, ValidationError
 
-from shopify import USER_AGENT
+from catalog import USER_AGENT
 
 BASE_URL = "https://api.deepseek.com"
 # 核对已有资料需要判断力，默认用 pro；想更省可以把环境变量 DEEPSEEK_MODEL 设成 deepseek-flash
