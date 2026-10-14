@@ -7,7 +7,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from shopify import USER_AGENT
+from catalog import USER_AGENT
 
 # 与现有缩略图一致：最长边 600 的 JPG
 MAX_SIDE = 600
