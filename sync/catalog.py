@@ -1,6 +1,6 @@
 """各家官网抓取共用的部分：网络请求、文字处理、规格解析和标题筛选。
 
-每种建站系统一个模块（shopify / woocommerce / hatch），都提供
+每种建站系统一个模块（shopify / woocommerce / cafe24 / april / hatch），都提供
 list_coffees(roaster, cache_dir)，返回结构相同的商品列表。
 """
 
@@ -21,7 +21,7 @@ USER_AGENT = "PourNotesSync/0.1 (+https://github.com/chaoz-22/pour-notes)"
 REQUEST_INTERVAL = 1.0
 RETRIES = 2
 
-SIZE_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(kg|g|grams?|lbs?|pounds?|oz)\b", re.IGNORECASE)
+SIZE_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(kg|grams?|gr|g|lbs?|pounds?|oz)\b", re.IGNORECASE)
 GRAMS_PER_UNIT = {"g": 1, "kg": 1000, "lb": 453.6, "oz": 28.35}
 
 
@@ -74,7 +74,7 @@ def parse_sizes(text: str) -> list[tuple[float, str]]:
     sizes = []
     for amount, unit in SIZE_RE.findall(text or ""):
         unit = unit.lower()
-        unit = {"gram": "g", "grams": "g", "lbs": "lb", "pound": "lb", "pounds": "lb"}.get(unit, unit)
+        unit = {"gram": "g", "grams": "g", "gr": "g", "lbs": "lb", "pound": "lb", "pounds": "lb"}.get(unit, unit)
         value = float(amount.replace(",", "."))
         label = f"{value:g}{unit}"
         sizes.append((value * GRAMS_PER_UNIT[unit], label))
