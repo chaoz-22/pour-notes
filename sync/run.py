@@ -8,7 +8,7 @@
     python3 sync/run.py --cache                # 本地调试：官网数据缓存到 sync/.cache/
 
 配置了 CLOUDBASE_API_KEY（环境变量或 sync/.env）时读云端数据库，否则读本地的
-cloud-data/roaster_guide_beans.json。--apply 还需要 ANTHROPIC_API_KEY 和
+cloud-data/roaster_guide_beans.json。--apply 还需要 DEEPSEEK_API_KEY 和
 sync/requirements.txt 里的依赖。
 
 --apply 做四件事：官网找不到的豆子下架（数据保留，官网重新出现时自动恢复）；
@@ -105,7 +105,7 @@ def sync_visibility(result: dict, has_items: bool) -> list[str]:
 
 def publish_changes(roaster: dict, result: dict, own_beans: list[dict]) -> tuple[list[str], list[tuple[str, str]]]:
     """上线新豆，并对照官网核对已有的豆子。单款失败不影响其他，返回执行记录和失败清单。"""
-    import publish  # 只有写库时才需要 Claude 和图片处理的依赖
+    import publish  # 只有写库时才需要模型和图片处理的依赖
 
     actions, failures = [], []
     for item in result["new"]:
