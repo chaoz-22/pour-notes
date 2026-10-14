@@ -104,7 +104,7 @@ node scripts/export-roaster-catalog.js
 python3 sync/run.py
 ```
 
-对某一家执行完整同步（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY` 和 `ANTHROPIC_API_KEY`：
+对某一家执行完整同步（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY` 和 `DEEPSEEK_API_KEY`（把官网信息整理成中文用的是 DeepSeek）：
 
 ```bash
 python3 sync/run.py --roaster Sey --apply

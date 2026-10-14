@@ -19,7 +19,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +34,7 @@ jobs:
       - name: 上新并更新豆单
         env:
           CLOUDBASE_API_KEY: ${{ secrets.CLOUDBASE_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           ROASTER: ${{ inputs.roaster }}
         run: |
           if [ -n "$ROASTER" ]; then
