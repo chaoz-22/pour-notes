@@ -157,7 +157,13 @@ def _pair_line(pair: dict) -> str:
     return f"- {pair['bean']['name']} ↔ {_item_link(pair['item'])}"
 
 
-def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[str, int], source: str) -> str:
+def render(
+    results: list[dict],
+    failures: list[tuple[str, str]],
+    skipped_items: list[tuple[str, str]],
+    skipped: dict[str, int],
+    source: str,
+) -> str:
     lines = [
         "# 官网豆单差异报告",
         "",
@@ -192,8 +198,11 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
                 lines += ["", f"### {title}（{len(rows)}）", "", *rows]
 
     if failures:
-        lines += ["", "## 失败", ""]
+        lines += ["", "## 失败（整家没有处理）", ""]
         lines += [f"- {name}：{error}" for name, error in failures]
+    if skipped_items:
+        lines += ["", "## 这次没成功的豆子（下次运行自动重试）", ""]
+        lines += [f"- {name}：{error}" for name, error in skipped_items]
     if skipped:
         lines += ["", "## 尚未接入的烘焙商", ""]
         lines += [f"- {name}（库内 {count} 款）" for name, count in sorted(skipped.items())]
@@ -232,7 +241,9 @@ def main() -> int:
     if args.apply:
         print(f"已备份云端现有数据到 {backup_beans(beans)}")
     roasters = [roaster for roaster in ROASTERS if not selected or roaster["name"] in selected]
-    results, failures = [], []
+    # failures 是整家没处理成的，要让任务报红；skipped_items 是个别豆子这次没成功，
+    # 下次运行会自动重试，只在报告里列出
+    results, failures, skipped_items = [], [], []
     for roaster in roasters:
         try:
             list_coffees = ADAPTERS[roaster.get("platform", "shopify")]
@@ -262,8 +273,8 @@ def main() -> int:
             for action in result["actions"]:
                 print(f"  {action}")
             for name, error in item_failures:
-                print(f"  失败：{name}：{error}", file=sys.stderr)
-            failures.extend(item_failures)
+                print(f"  这次没成功，下次重试：{name}：{error}", file=sys.stderr)
+            skipped_items.extend(item_failures)
 
     skipped: dict[str, int] = {}
     if not args.roaster:
@@ -272,7 +283,7 @@ def main() -> int:
                 skipped[bean.get("roaster")] = skipped.get(bean.get("roaster"), 0) + 1
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(render(results, failures, skipped, source), encoding="utf-8")
+    args.out.write_text(render(results, failures, skipped_items, skipped, source), encoding="utf-8")
     print(f"报告已写入 {args.out}")
     return 1 if failures else 0
 
