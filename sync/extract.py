@@ -1,4 +1,4 @@
-"""用 Claude 把官网商品页整理成寻豆指南的中文豆子信息。"""
+"""用 Claude 把官网商品页整理成寻豆指南的中文豆子信息，并核对已有的资料。"""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ import re
 import urllib.request
 
 import anthropic
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from shopify import USER_AGENT
@@ -53,6 +55,35 @@ class BeanInfo(BaseModel):
     transparency: str = Field(description="价格透明度信息；官网没有则留空")
 
 
+# 核对时不动名字：用户已经眼熟的豆名不因为官网换了写法而改变
+VERIFY_FIELDS = [field for field in BeanInfo.model_fields if field not in ("name", "detailName")]
+LIST_FIELDS = ("flavorNotes", "producerStory")
+
+VERIFY_PROMPT = """你在为一个手冲咖啡小程序的「寻豆指南」核对豆子资料。用户会给你一款咖啡豆的官网页面文字，以及小程序里现有的中文资料卡。请对照官网，找出资料卡里写错的地方并给出改正。
+
+这些资料卡大多是人工整理的，读者会按上面的信息去买豆子，所以事实要和官网一致；但人工写的文字本身有价值，不要为了风格去改它。具体来说：
+
+- 只在资料卡与官网页面明确矛盾时才改，比如产区、庄园、生产者、品种、处理法、海拔、采收时间、风味词、价格写得和官网不一样。
+- 资料卡某个字段是空的，而官网页面明确给出了这项信息，可以补上。
+- 官网页面没有提到的内容不算错。资料卡里的信息可能来自豆袋或烘焙商的其他渠道，保持原样。
+- 措辞、译名、详略、段落划分的差异不算错，不要改。国家名、常见品种和处理法用中文通行译名是这份资料卡的既定写法。
+- 改正时只动出错的地方。producerStory 这类长文字，在原文上做最小改动后给出完整的新值，不要重写。
+- 人名、庄园名、产区名保留官网的原文写法，不要音译。
+
+每条改正填 field、新值和一句话的 reason（用中文说明官网是怎么写的）。字符串字段把新值填在 text，flavorNotes 和 producerStory 把新值填在 items。全部一致就返回空列表。"""
+
+
+class Correction(BaseModel):
+    field: Literal[tuple(VERIFY_FIELDS)]
+    text: str = Field(description="字符串字段的新值；列表字段留空")
+    items: list[str] = Field(description="flavorNotes 或 producerStory 的完整新值；其他字段留空列表")
+    reason: str = Field(description="一句话说明官网是怎么写的")
+
+
+class Verification(BaseModel):
+    corrections: list[Correction]
+
+
 class ExtractionError(RuntimeError):
     pass
 
@@ -76,18 +107,8 @@ def _example_cards(examples: list[dict]) -> str:
     return "\n\n".join(json.dumps(card, ensure_ascii=False, indent=2) for card in cards)
 
 
-def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[dict]) -> dict:
-    """返回按 BeanInfo 填好的字段。examples 是同一家烘焙商已有的豆子，用来对齐写法。"""
+def _ask(system: str, user: str, output_format: type[BaseModel], title: str) -> BaseModel:
     client = anthropic.Anthropic()
-    system = SYSTEM_PROMPT
-    if examples:
-        system += "\n\n<examples>\n" + _example_cards(examples) + "\n</examples>"
-    user = (
-        f"烘焙商：{roaster_name}\n"
-        f"官网商品标题：{item['title']}\n"
-        f"商品页地址：{item['url']}\n\n"
-        f"<page_text>\n{page_text}\n</page_text>"
-    )
     try:
         # fallbacks：万一请求被安全分类器误拒，由服务端自动换模型重试
         response = client.beta.messages.parse(
@@ -97,7 +118,7 @@ def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[d
             fallbacks="default",
             system=system,
             messages=[{"role": "user", "content": user}],
-            output_format=BeanInfo,
+            output_format=output_format,
         )
     except anthropic.RateLimitError as error:
         raise ExtractionError(f"Claude API 限流：{error.message}") from error
@@ -107,5 +128,39 @@ def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[d
         raise ExtractionError(f"连不上 Claude API：{error}") from error
 
     if response.stop_reason != "end_turn" or response.parsed_output is None:
-        raise ExtractionError(f"没有得到完整结果（stop_reason={response.stop_reason}）：{item['title']}")
-    return response.parsed_output.model_dump()
+        raise ExtractionError(f"没有得到完整结果（stop_reason={response.stop_reason}）：{title}")
+    return response.parsed_output
+
+
+def _page_message(roaster_name: str, item: dict, page_text: str) -> str:
+    return (
+        f"烘焙商：{roaster_name}\n"
+        f"官网商品标题：{item['title']}\n"
+        f"商品页地址：{item['url']}\n\n"
+        f"<page_text>\n{page_text}\n</page_text>"
+    )
+
+
+def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[dict]) -> dict:
+    """返回按 BeanInfo 填好的字段。examples 是同一家烘焙商已有的豆子，用来对齐写法。"""
+    system = SYSTEM_PROMPT
+    if examples:
+        system += "\n\n<examples>\n" + _example_cards(examples) + "\n</examples>"
+    info = _ask(system, _page_message(roaster_name, item, page_text), BeanInfo, item["title"])
+    return info.model_dump()
+
+
+def verify_bean(roaster_name: str, item: dict, page_text: str, bean: dict) -> list[dict]:
+    """对照官网核对已有的资料卡，返回需要改正的字段：[{"field", "value", "reason"}]。"""
+    card = {field: bean.get(field) or ([] if field in LIST_FIELDS else "") for field in VERIFY_FIELDS}
+    user = (
+        _page_message(roaster_name, item, page_text)
+        + "\n\n<card>\n" + json.dumps(card, ensure_ascii=False, indent=2) + "\n</card>"
+    )
+    result = _ask(VERIFY_PROMPT, user, Verification, item["title"])
+    corrections = []
+    for correction in result.corrections:
+        value = correction.items if correction.field in LIST_FIELDS else correction.text
+        if value and value != card[correction.field]:
+            corrections.append({"field": correction.field, "value": value, "reason": correction.reason})
+    return corrections

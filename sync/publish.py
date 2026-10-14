@@ -1,17 +1,17 @@
-"""把官网新豆整理成文档并上线，或用官网最新信息更新已有的豆子。"""
+"""把官网新豆整理成文档并上线，或对照官网核对、改正已有的豆子。"""
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 
 import cloudbase
-from extract import BeanInfo, extract_bean, fetch_page_text
+from extract import extract_bean, fetch_page_text, verify_bean
 from images import make_thumbnail
 
 IMAGE_DIR = "/assets/bean-thumbnails-jpg"
 STORAGE_ROOT = "roaster-guide"
-# 官网信息更新时不改名字，免得用户眼熟的豆名突然变了
-REFRESH_FIELDS = [field for field in BeanInfo.model_fields if field not in ("name", "detailName")]
 
 
 def _examples(own_beans: list[dict]) -> list[dict]:
@@ -26,8 +26,16 @@ def _house_roast(own_beans: list[dict]) -> str:
     return roasts.pop() if len(roasts) == 1 else ""
 
 
+def _bean_id(roaster: dict, handle: str) -> str:
+    """豆子 id 也用作图片文件名，只留英文数字；官网链接里有中文等字符时加一段指纹防重名。"""
+    slug = re.sub(r"[^a-z0-9]+", "-", handle.lower()).strip("-")
+    if slug != handle:
+        slug = f"{slug}-{hashlib.sha256(handle.encode('utf-8')).hexdigest()[:6]}".strip("-")
+    return f"{roaster['slug']}-{slug}"
+
+
 def publish_new(roaster: dict, item: dict, own_beans: list[dict]) -> dict:
-    bean_id = f"{roaster['slug']}-{item['handle']}"
+    bean_id = _bean_id(roaster, item["handle"])
     if any(bean["_id"] == bean_id for bean in own_beans):
         raise ValueError(f"{bean_id} 已存在，但没有和官网商品对应上，需要人工确认")
 
@@ -48,23 +56,23 @@ def publish_new(roaster: dict, item: dict, own_beans: list[dict]) -> dict:
         "enabled": True,
         "sourceUrl": item["url"],
         "sourceHash": item["source_hash"],
+        "verifiedHash": item["source_hash"],  # 刚按官网生成的，不用再核对
     }
     cloudbase.insert_bean(bean)
     return bean
 
 
-def needs_refresh(bean: dict, item: dict) -> bool:
-    """官网的标题或介绍和上次记录的不一样了。已下架的豆子不再跟进。"""
-    recorded = bean.get("sourceHash") or ""
-    return bean.get("enabled") is not False and bool(recorded) and recorded != item["source_hash"]
+def needs_verify(bean: dict, item: dict) -> bool:
+    """还没对照当前这版官网信息核对过。已下架的豆子不再跟进。"""
+    return bean.get("enabled") is not False and bean.get("verifiedHash") != item["source_hash"]
 
 
-def refresh(roaster: dict, bean: dict, item: dict, own_beans: list[dict]) -> list[str]:
-    """用官网最新信息改写已有豆子，返回改动了的字段。官网没提到的字段保持原样。"""
-    same_version = bean["sourceHash"].split(":")[0] == item["source_hash"].split(":")[0]
-    changes = {}
-    if same_version:
-        info = extract_bean(roaster["name"], item, fetch_page_text(item["url"]), _examples(own_beans))
-        changes = {field: info[field] for field in REFRESH_FIELDS if info[field] and info[field] != bean.get(field)}
-    cloudbase.update_bean(bean["_id"], {**changes, "sourceHash": item["source_hash"]})
-    return list(changes)
+def verify(roaster: dict, bean: dict, item: dict) -> list[dict]:
+    """对照官网核对已有豆子，把写错的字段在原记录上改正，返回改动清单。
+
+    核对过就记下官网信息的指纹；官网以后有变化时指纹对不上，会再核对一次。
+    """
+    corrections = verify_bean(roaster["name"], item, fetch_page_text(item["url"]), bean)
+    changes = {correction["field"]: correction["value"] for correction in corrections}
+    cloudbase.update_bean(bean["_id"], {**changes, "sourceHash": item["source_hash"], "verifiedHash": item["source_hash"]})
+    return corrections

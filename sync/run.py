@@ -9,7 +9,11 @@
 
 配置了 CLOUDBASE_API_KEY（环境变量或 sync/.env）时读云端数据库，否则读本地的
 cloud-data/roaster_guide_beans.json。--apply 还需要 ANTHROPIC_API_KEY 和
-sync/requirements.txt 里的依赖。售罄和下架不处理，由人工在控制台改 enabled。
+sync/requirements.txt 里的依赖。
+
+--apply 做四件事：官网找不到的豆子下架（数据保留，官网重新出现时自动恢复）；
+已有豆子补记官网链接；上线官网的新豆；对照官网核对已有豆子并改正写错的字段。
+官网页面还在、只是售罄的豆子保持显示。
 """
 
 from __future__ import annotations
@@ -48,7 +52,9 @@ def compare(roaster: dict, beans: list[dict], items: list[dict]) -> dict:
         "listed": [pair for pair in confident if pair["item"]["available"]],
         "sold_out": [pair for pair in confident if not pair["item"]["available"]],
         "uncertain": [pair for pair in result["pairs"] if not pair["confident"]],
-        "missing": result["unmatched_beans"],
+        # 已经下架的不再重复列出
+        "missing": [bean for bean in result["unmatched_beans"] if bean.get("enabled") is not False],
+        "actions": [],
         "new": [item for item in result["unmatched_items"] if item["available"]],
     }
 
@@ -76,27 +82,52 @@ def link_sources(result: dict) -> int:
     return linked
 
 
-def publish_changes(roaster: dict, result: dict, own_beans: list[dict]) -> list[tuple[str, str]]:
-    """上线新豆、更新官网信息有变的豆子。单款失败不影响其他，返回失败清单。"""
+def sync_visibility(result: dict, has_items: bool) -> list[str]:
+    """官网找不到的豆子下架（只改 enabled，数据保留）；之前被脚本下架、现在官网又有了的恢复。
+
+    脚本下架的会记 hiddenBy=sync，人工下架的没有这个标记，脚本不会替它恢复。
+    """
+    actions = []
+    if not has_items and result["missing"]:
+        # 官网一款豆子都没读到，多半是抓取规则失效了，不能据此把整家下架
+        raise RuntimeError("官网没有读到任何咖啡豆，已跳过下架，请检查这家的抓取规则")
+    for bean in result["missing"]:
+        cloudbase.update_bean(bean["_id"], {"enabled": False, "hiddenBy": "sync"})
+        actions.append(f"已下架：{bean['name']}（官网找不到）")
+    for pair in result["listed"] + result["sold_out"]:
+        bean = pair["bean"]
+        if bean.get("enabled") is False and bean.get("hiddenBy") == "sync":
+            cloudbase.update_bean(bean["_id"], {"enabled": True, "hiddenBy": ""})
+            bean["enabled"] = True
+            actions.append(f"已恢复上架：{bean['name']}（官网重新出现）")
+    return actions
+
+
+def publish_changes(roaster: dict, result: dict, own_beans: list[dict]) -> tuple[list[str], list[tuple[str, str]]]:
+    """上线新豆，并对照官网核对已有的豆子。单款失败不影响其他，返回执行记录和失败清单。"""
     import publish  # 只有写库时才需要 Claude 和图片处理的依赖
 
-    failures = []
+    actions, failures = [], []
     for item in result["new"]:
         try:
             bean = publish.publish_new(roaster, item, own_beans)
-            print(f"  已上线：{bean['name']}（{bean['_id']}）")
+            actions.append(f"已上线：{bean['name']}（`{bean['_id']}`）")
         except Exception as error:
             failures.append((f"{roaster['name']} · {item['title']}", f"{type(error).__name__}: {error}"))
     for pair in result["listed"] + result["sold_out"]:
         bean, item = pair["bean"], pair["item"]
-        if not publish.needs_refresh(bean, item):
+        if not publish.needs_verify(bean, item):
             continue
         try:
-            changed = publish.refresh(roaster, bean, item, own_beans)
-            print(f"  已更新：{bean['name']}（{'、'.join(changed) or '内容无变化'}）")
+            corrections = publish.verify(roaster, bean, item)
         except Exception as error:
             failures.append((f"{roaster['name']} · {bean['name']}", f"{type(error).__name__}: {error}"))
-    return failures
+            continue
+        if not corrections:
+            actions.append(f"已核对：{bean['name']}，与官网一致")
+        for correction in corrections:
+            actions.append(f"已改正：{bean['name']} 的 {correction['field']}。{correction['reason']}")
+    return actions, failures
 
 
 def _item_link(item: dict) -> str:
@@ -132,12 +163,14 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
         sections = [
             ("官网新豆（在售，库里没有）", [f"- {_item_link(item)}" for item in result["new"]]),
             ("库内但官网已售罄", [_pair_line(pair) for pair in result["sold_out"]]),
-            ("库内但官网找不到（可能已下架，或名字对不上）",
+            ("官网已找不到（--apply 时会下架）",
              [f"- {bean['name']}（`{bean['id']}`）" for bean in result["missing"]]),
             ("待确认的匹配（名字相近但没完全对上；是同一款就把豆子的 sourceUrl 填成官网链接，不是就填 -）",
              [_pair_line(pair) for pair in result["uncertain"]]),
             ("在售且已收录", [_pair_line(pair) for pair in result["listed"]]),
         ]
+        if result["actions"]:
+            sections.insert(0, ("本次执行", [f"- {action}" for action in result["actions"]]))
         for title, rows in sections:
             if rows:
                 lines += ["", f"### {title}（{len(rows)}）", "", *rows]
@@ -193,8 +226,17 @@ def main() -> int:
             f"找不到 {len(result['missing'])}，待确认 {len(result['uncertain'])}"
         )
         if args.apply:
-            print(f"  已为 {link_sources(result)} 款豆子补上官网链接")
-            item_failures = publish_changes(roaster, result, own_beans)
+            try:
+                result["actions"] += sync_visibility(result, bool(items))
+            except RuntimeError as error:
+                failures.append((roaster["name"], str(error)))
+            linked = link_sources(result)
+            if linked:
+                result["actions"].append(f"已为 {linked} 款豆子补上官网链接")
+            actions, item_failures = publish_changes(roaster, result, own_beans)
+            result["actions"] += actions
+            for action in result["actions"]:
+                print(f"  {action}")
             for name, error in item_failures:
                 print(f"  失败：{name}：{error}", file=sys.stderr)
             failures.extend(item_failures)

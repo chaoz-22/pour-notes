@@ -8,6 +8,7 @@ import json
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -138,7 +139,7 @@ def _normalize(roaster: dict, product: dict) -> dict:
         "title": title,
         "body": body,
         "source_hash": _source_hash(title, body),
-        "url": f"https://{roaster['host']}/products/{product['handle']}",
+        "url": f"https://{roaster['host']}/products/{urllib.parse.quote(product['handle'])}",
         "available": any(variant.get("available") for variant in variants),
         "sizes": sizes,
         "image": images[0]["src"] if images else "",

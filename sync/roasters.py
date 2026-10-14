@@ -41,6 +41,8 @@ ROASTERS = [
         "name": "Coffee Collective",
         "slug": "coffee-collective",
         "host": "coffeecollective.dk",
+        # 全店接口里混有官网上打不开的商品（批发等），只有这个系列才是官网实际在卖的
+        "collection": "our-coffees",
         "require_tags": ["filter", "coffee"],
         "exclude_tags": ["equipment", "subscription", "bundle", "christmas"],
         "group_by_size": True,  # 同一款豆按 250g / 1kg / 4kg 拆成了多个商品，需要合并
