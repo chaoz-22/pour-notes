@@ -12,6 +12,7 @@ import json
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -26,6 +27,8 @@ GRAMS_PER_UNIT = {"g": 1, "kg": 1000, "lb": 453.6, "oz": 28.35}
 
 
 def fetch(url: str, accept: str = "*/*") -> bytes:
+    # 链接里偶尔有长破折号、中文这类字符，先转成 %xx 形式，已转过的不会重复转
+    url = urllib.parse.quote(url, safe=":/?#[]@!$&'()*+,;=%~")
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": accept})
     for attempt in range(RETRIES + 1):
         try:

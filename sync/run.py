@@ -23,6 +23,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 from datetime import datetime
 from pathlib import Path
 
@@ -130,6 +131,11 @@ def publish_changes(roaster: dict, result: dict, own_beans: list[dict]) -> tuple
         try:
             bean = publish.publish_new(roaster, item, own_beans)
             actions.append(f"已上线：{bean['name']}（`{bean['_id']}`）")
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+            # 商品接口里有、官网上却打不开的商品（隐藏或批发用），当作官网没有
+            actions.append(f"跳过：{item['title']}（官网页面打不开）")
         except Exception as error:
             failures.append((f"{roaster['name']} · {item['title']}", f"{type(error).__name__}: {error}"))
     for pair in result["listed"] + result["sold_out"]:

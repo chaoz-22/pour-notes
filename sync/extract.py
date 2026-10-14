@@ -16,7 +16,8 @@ BASE_URL = "https://api.deepseek.com"
 # 核对已有资料需要判断力，默认用 pro；想更省可以把环境变量 DEEPSEEK_MODEL 设成 deepseek-flash
 MODEL = os.environ.get("DEEPSEEK_MODEL") or "deepseek-v4-pro"
 MAX_ATTEMPTS = 3
-MAX_PAGE_CHARS = 20000
+# 有的店商品页很长（Standout 约 2.3 万字），模型读得下，只防异常页面
+MAX_PAGE_CHARS = 60000
 
 SYSTEM_PROMPT = """你在为一个手冲咖啡小程序的「寻豆指南」整理豆子资料。用户会给你一款咖啡豆在烘焙商官网上的页面文字，请据此填写这款豆子的中文资料卡。
 

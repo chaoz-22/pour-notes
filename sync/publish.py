@@ -42,7 +42,8 @@ def _page_text(item: dict) -> str:
 def publish_new(roaster: dict, item: dict, own_beans: list[dict]) -> dict:
     bean_id = _bean_id(roaster, item["handle"])
     if any(bean["_id"] == bean_id for bean in own_beans):
-        raise ValueError(f"{bean_id} 已存在，但没有和官网商品对应上，需要人工确认")
+        # 库里有同名的旧豆子（已按"以官网为准"下架），新豆加一段指纹区分
+        bean_id = f"{bean_id}-{hashlib.sha256(item['url'].encode('utf-8')).hexdigest()[:6]}"
 
     info = extract_bean(roaster["name"], item, _page_text(item), _examples(own_beans))
     image_path = ""
