@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       roaster:
-        description: 只同步某一家烘焙商（留空则同步全部）
+        description: 只同步某一家烘焙商，不分大小写，如 sey、lab 19（留空则同步全部）
         required: false
 
 permissions:
