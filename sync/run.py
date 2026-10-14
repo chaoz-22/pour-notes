@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -184,6 +185,11 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
     return "\n".join(lines) + "\n"
 
 
+def _name_key(name: str) -> str:
+    """烘焙商名字不分大小写，也不计较空格和标点：sey、LAB19、apollons gold 都能认。"""
+    return re.sub(r"[^a-z0-9]", "", name.casefold())
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--roaster", action="append", help="只处理指定烘焙商，可重复")
@@ -194,10 +200,12 @@ def main() -> int:
     args = parser.parse_args()
 
     known = {roaster["name"] for roaster in ROASTERS}
-    unknown = set(args.roaster or []) - known
+    by_key = {_name_key(name): name for name in known}
+    unknown = sorted(name for name in args.roaster or [] if _name_key(name) not in by_key)
     if unknown:
-        print(f"未接入的烘焙商：{', '.join(sorted(unknown))}", file=sys.stderr)
+        print(f"未接入的烘焙商：{', '.join(unknown)}。可用的名字：{'、'.join(sorted(known))}", file=sys.stderr)
         return 2
+    selected = {by_key[_name_key(name)] for name in args.roaster or []}
 
     cloudbase.load_env_file()
     use_cloud = bool(os.environ.get("CLOUDBASE_API_KEY"))
@@ -208,7 +216,7 @@ def main() -> int:
     source = "云端数据库" if use_cloud else f"本地的 `{args.db.name}`"
     if args.apply:
         print(f"已备份云端现有数据到 {backup_beans(beans)}")
-    roasters = [roaster for roaster in ROASTERS if not args.roaster or roaster["name"] in args.roaster]
+    roasters = [roaster for roaster in ROASTERS if not selected or roaster["name"] in selected]
     results, failures = [], []
     for roaster in roasters:
         try:
