@@ -133,7 +133,7 @@ def _json_instructions(output_format: type[BaseModel]) -> str:
     )
 
 
-def _ask(system: str, user: str, output_format: type[BaseModel], title: str) -> BaseModel:
+def _ask(system: str, user: str, output_format: type[BaseModel], title: str, thinking: bool) -> BaseModel:
     client = OpenAI(api_key=os.environ.get("DEEPSEEK_API_KEY"), base_url=BASE_URL)
     problem = ""
     for _ in range(MAX_ATTEMPTS):
@@ -146,7 +146,7 @@ def _ask(system: str, user: str, output_format: type[BaseModel], title: str) -> 
                     {"role": "user", "content": user},
                 ],
                 response_format={"type": "json_object"},
-                extra_body={"thinking": {"type": "enabled"}},
+                extra_body={"thinking": {"type": "enabled" if thinking else "disabled"}},
             )
         except openai.RateLimitError as error:
             raise ExtractionError(f"DeepSeek API 限流：{error.message}") from error
@@ -178,7 +178,8 @@ def extract_bean(roaster_name: str, item: dict, page_text: str, examples: list[d
     system = SYSTEM_PROMPT
     if examples:
         system += "\n\n<examples>\n" + _example_cards(examples) + "\n</examples>"
-    info = _ask(system, _page_message(roaster_name, item, page_text), BeanInfo, item["title"])
+    # 整理新豆是照着页面填表，不开思考也写得好，快十倍
+    info = _ask(system, _page_message(roaster_name, item, page_text), BeanInfo, item["title"], thinking=False)
     return info.model_dump()
 
 
@@ -189,7 +190,8 @@ def verify_bean(roaster_name: str, item: dict, page_text: str, bean: dict) -> li
         _page_message(roaster_name, item, page_text)
         + "\n\n<card>\n" + json.dumps(card, ensure_ascii=False, indent=2) + "\n</card>"
     )
-    result = _ask(VERIFY_PROMPT, user, Verification, item["title"])
+    # 核对要判断哪些算"写错"，改错了会动到人工写的内容，值得多花时间思考
+    result = _ask(VERIFY_PROMPT, user, Verification, item["title"], thinking=True)
     corrections = []
     for correction in result.corrections:
         if correction.field not in VERIFY_FIELDS:
