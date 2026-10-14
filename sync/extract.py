@@ -6,12 +6,11 @@ import html
 import json
 import os
 import re
-import urllib.request
 import openai
 from openai import OpenAI
 from pydantic import BaseModel, Field, ValidationError
 
-from catalog import USER_AGENT
+from catalog import get_text
 
 BASE_URL = "https://api.deepseek.com"
 # 核对已有资料需要判断力，默认用 pro；想更省可以把环境变量 DEEPSEEK_MODEL 设成 deepseek-flash
@@ -107,9 +106,7 @@ class ExtractionError(RuntimeError):
 
 def fetch_page_text(url: str) -> str:
     """取商品页的可读文字。很多细节（海拔、处理过程、价格）只在页面上，不在商品接口里。"""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        page = response.read().decode("utf-8", "replace")
+    page = get_text(url)
     page = re.sub(r"<(script|style|noscript|svg|template)\b.*?</\1>", " ", page, flags=re.S | re.I)
     text = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", page)).split())
     if len(text) > MAX_PAGE_CHARS:

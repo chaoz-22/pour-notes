@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -18,6 +19,7 @@ GATEWAY_URL = f"https://{ENV_ID}.api.tcloudbasegateway.com"
 DATABASE_URL = f"{GATEWAY_URL}/v1/database/instances/(default)/databases/(default)"
 STORAGE_URL = f"{GATEWAY_URL}/v1/storages"
 PAGE_SIZE = 100
+RETRIES = 2
 ENV_FILE = Path(__file__).resolve().parent / ".env"
 
 
@@ -47,13 +49,20 @@ def _call(method: str, url: str, query: dict | None = None, body: dict | list | 
         data=json.dumps(body).encode("utf-8") if body is not None else None,
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response)
-    except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", "replace")[:500]
-        path = urllib.parse.urlparse(url).path
-        raise CloudBaseError(f"{method} {path} 失败（HTTP {error.code}）：{detail}") from None
+    path = urllib.parse.urlparse(url).path
+    for attempt in range(RETRIES + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", "replace")[:500]
+            raise CloudBaseError(f"{method} {path} 失败（HTTP {error.code}）：{detail}") from None
+        except (urllib.error.URLError, TimeoutError) as error:
+            # 网络抖动重试；新增文档除外，免得第一次其实成功了又插一遍
+            if attempt == RETRIES or (method == "POST" and "/documents" in path):
+                raise CloudBaseError(f"{method} {path} 网络错误：{error}") from None
+            time.sleep(3 * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 def _request(method: str, path: str, query: dict | None = None, body: dict | None = None) -> dict:
@@ -124,10 +133,15 @@ def upload_file(cloud_path: str, data: bytes) -> str:
             "X-Cos-Meta-Fileid": info["cloudObjectMeta"],
         },
     )
-    try:
-        with urllib.request.urlopen(request, timeout=60):
-            pass
-    except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", "replace")[:300]
-        raise CloudBaseError(f"上传 {cloud_path} 失败（HTTP {error.code}）：{detail}") from None
-    return info["cloudObjectId"]
+    for attempt in range(RETRIES + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=60):
+                return info["cloudObjectId"]
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", "replace")[:300]
+            raise CloudBaseError(f"上传 {cloud_path} 失败（HTTP {error.code}）：{detail}") from None
+        except (urllib.error.URLError, TimeoutError) as error:
+            if attempt == RETRIES:
+                raise CloudBaseError(f"上传 {cloud_path} 网络错误：{error}") from None
+            time.sleep(3 * (attempt + 1))
+    raise AssertionError("unreachable")

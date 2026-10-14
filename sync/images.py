@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import urllib.request
 from io import BytesIO
 
 from PIL import Image
 
-from catalog import USER_AGENT
+from catalog import fetch
 
 # 与现有缩略图一致：最长边 600 的 JPG
 MAX_SIDE = 600
@@ -17,9 +16,7 @@ MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024
 
 def make_thumbnail(url: str) -> bytes:
     """下载图片并转成 JPG；透明背景铺成白底。"""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        data = response.read(MAX_DOWNLOAD_BYTES + 1)
+    data = fetch(url)
     if len(data) > MAX_DOWNLOAD_BYTES:
         raise ValueError(f"图片超过 {MAX_DOWNLOAD_BYTES // 1024 // 1024}MB：{url}")
 
