@@ -34,12 +34,17 @@ def _bean_id(roaster: dict, handle: str) -> str:
     return f"{roaster['slug']}-{slug}"
 
 
+def _page_text(item: dict) -> str:
+    """商品介绍文字：一般去抓商品页，个别网站抓不到时由抓取模块直接提供。"""
+    return item.get("page_text") or fetch_page_text(item["url"])
+
+
 def publish_new(roaster: dict, item: dict, own_beans: list[dict]) -> dict:
     bean_id = _bean_id(roaster, item["handle"])
     if any(bean["_id"] == bean_id for bean in own_beans):
         raise ValueError(f"{bean_id} 已存在，但没有和官网商品对应上，需要人工确认")
 
-    info = extract_bean(roaster["name"], item, fetch_page_text(item["url"]), _examples(own_beans))
+    info = extract_bean(roaster["name"], item, _page_text(item), _examples(own_beans))
     image_path = ""
     if item["image"]:
         image_path = f"{IMAGE_DIR}/{roaster.get('image_dir', roaster['slug'])}/{bean_id}.jpg"
@@ -72,7 +77,7 @@ def verify(roaster: dict, bean: dict, item: dict) -> list[dict]:
 
     核对过就记下官网信息的指纹；官网以后有变化时指纹对不上，会再核对一次。
     """
-    corrections = verify_bean(roaster["name"], item, fetch_page_text(item["url"]), bean)
+    corrections = verify_bean(roaster["name"], item, _page_text(item), bean)
     changes = {correction["field"]: correction["value"] for correction in corrections}
     cloudbase.update_bean(bean["_id"], {**changes, "sourceHash": item["source_hash"], "verifiedHash": item["source_hash"]})
     return corrections

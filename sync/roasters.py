@@ -1,8 +1,9 @@
 """各烘焙商官网的抓取配置。
 
 大多数是 Shopify 店铺，公开了 /products.json；platform 不填就是 Shopify。
-另外支持 WooCommerce 店铺（platform: "woocommerce"）和 Hatch 的自建网站
-（platform: "hatch"）。新增一家只需要在 ROASTERS 里加一项，字段含义见各段第一项的注释。
+另外支持 WooCommerce（"woocommerce"）、Cafe24（"cafe24"），以及 April（"april"）
+和 Hatch（"hatch"）两家的自建网站。新增一家只需要在 ROASTERS 里加一项，
+字段含义见各段第一项的注释。
 
 只收手冲（Filter）豆，全能烘焙（Omni）也算；意式烘焙在 shopify.py 里统一排除。
 """
@@ -22,6 +23,7 @@ ROASTERS = [
         # 还可以用：collection（只读某个系列）/ require_tags / exclude_tags
         # / exclude_title（正则）/ group_by_size / skip_bulk（跳过只卖 500g 以上的大包装）
         # / image_dir（图片目录和 slug 不一样时填）
+        # / feed_host（官网域名关了商品接口时，填后台的 xxx.myshopify.com）
     },
     {
         "name": "Prodigal",
@@ -112,6 +114,50 @@ ROASTERS = [
         "slug": "lab-19",
         "host": "lab19coffee.com",
         "types": ["Coffee"],
+    },
+    {
+        "name": "Swerl",
+        "slug": "swerl",
+        "host": "swerl.se",
+        "require_tags": ["Coffee"],
+        "exclude_title": r"\[odd|test roast",  # [ODD B] 是同一款豆的瑕疵特价版
+    },
+    {
+        "name": "Friedhats",
+        "slug": "friedhats",
+        "host": "friedhats.com",
+        "feed_host": "friedhats-coffee.myshopify.com",
+        "types": ["Coffee"],
+    },
+    {
+        "name": "One Half",
+        "slug": "one-half",
+        "host": "www.onehalfcoffee.com",
+        "feed_host": "onehalf-coffee.myshopify.com",
+        "types": ["Filter Coffee"],
+        "exclude_title": r"\bset\b",
+    },
+    {
+        "name": "Leaves",
+        "slug": "leaves",
+        "host": "leavescoffee.jp",
+        "feed_host": "leaves-coffee-roasters.myshopify.com",
+        "types": ["Coffee"],
+        "exclude_title": r"\btrio\b",
+    },
+    {
+        "name": "April",
+        "slug": "april",
+        "platform": "april",
+        "collections": ["filter-coffee"],  # 官网上要读的系列
+    },
+    {
+        "name": "Aery",
+        "slug": "aery",
+        "platform": "cafe24",
+        "host": "aerycoffee.com",
+        "category": 67,  # 官网 Shop 分类的编号，里面是全部商品
+        "exclude_title": r"dripper",
     },
     {
         "name": "Tanat",

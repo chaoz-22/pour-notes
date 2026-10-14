@@ -26,6 +26,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import april
+import cafe24
 import cloudbase
 import hatch
 import shopify
@@ -36,6 +38,8 @@ from roasters import ROASTERS
 ADAPTERS = {
     "shopify": shopify.list_coffees,
     "woocommerce": woocommerce.list_coffees,
+    "cafe24": cafe24.list_coffees,
+    "april": april.list_coffees,
     "hatch": hatch.list_coffees,
 }
 

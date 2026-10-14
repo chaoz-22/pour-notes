@@ -40,7 +40,9 @@ def fetch_products(roaster: dict, cache_dir: Path | None = None) -> list[dict]:
         for page in range(1, MAX_PAGES + 1):
             if page > 1:
                 time.sleep(REQUEST_INTERVAL)
-            batch = get_json(f"https://{roaster['host']}{path}?limit={PAGE_SIZE}&page={page}").get("products", [])
+            # 有的店官网域名关掉了商品接口，但后台域名（xxx.myshopify.com）还开着
+            host = roaster.get("feed_host") or roaster["host"]
+            batch = get_json(f"https://{host}{path}?limit={PAGE_SIZE}&page={page}").get("products", [])
             products.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break
@@ -54,6 +56,10 @@ def _is_espresso(product: dict) -> bool:
     label = f"{product.get('title') or ''} {product.get('product_type') or ''}"
     if re.search("espresso", label, re.IGNORECASE):
         return True
+    # 有的店把烘焙用途做成规格选项（Espresso / Filter / Omni），只有意式可选的不收
+    choices = [str(value) for option in product.get("options") or [] for value in option.get("values") or []]
+    if any("espresso" in choice.lower() for choice in choices):
+        return not any(FILTER_WORDS_RE.search(choice) for choice in choices)
     if FILTER_WORDS_RE.search(f"{label} {' '.join(map(str, product.get('tags') or []))}"):
         return False
     body = plain_text(product.get("body_html") or "")
