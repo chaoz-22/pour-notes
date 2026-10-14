@@ -58,17 +58,22 @@ def load_beans(path: Path) -> list[dict]:
 def compare(roaster: dict, beans: list[dict], items: list[dict]) -> dict:
     result = match(beans, items, roaster["slug"])
     confident = [pair for pair in result["pairs"] if pair["confident"]]
+    # 名字相近但对不上的，一律以官网为准：当作两款不同的豆子，
+    # 官网那款按新豆上线，库里那款按官网找不到处理。
+    # 想认定是同一款，在控制台把豆子的 sourceUrl 填成官网链接即可。
+    uncertain = [pair for pair in result["pairs"] if not pair["confident"]]
+    unmatched_beans = result["unmatched_beans"] + [pair["bean"] for pair in uncertain]
+    unmatched_items = result["unmatched_items"] + [pair["item"] for pair in uncertain]
     return {
         "name": roaster["name"],
         "bean_count": len(beans),
         "on_sale_count": sum(1 for item in items if item["available"]),
         "listed": [pair for pair in confident if pair["item"]["available"]],
         "sold_out": [pair for pair in confident if not pair["item"]["available"]],
-        "uncertain": [pair for pair in result["pairs"] if not pair["confident"]],
         # 已经下架的不再重复列出
-        "missing": [bean for bean in result["unmatched_beans"] if bean.get("enabled") is not False],
+        "missing": [bean for bean in unmatched_beans if bean.get("enabled") is not False],
         "actions": [],
-        "new": [item for item in result["unmatched_items"] if item["available"]],
+        "new": [item for item in unmatched_items if item["available"]],
     }
 
 
@@ -161,14 +166,14 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
         "",
         "## 汇总",
         "",
-        "| 烘焙商 | 库内 | 官网在售 | 在售且已收录 | 库内已售罄 | 库内但官网找不到 | 官网新豆 | 待确认 |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| 烘焙商 | 库内 | 官网在售 | 在售且已收录 | 库内已售罄 | 库内但官网找不到 | 官网新豆 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for result in results:
         lines.append(
             f"| {result['name']} | {result['bean_count']} | {result['on_sale_count']} "
             f"| {len(result['listed'])} | {len(result['sold_out'])} | {len(result['missing'])} "
-            f"| {len(result['new'])} | {len(result['uncertain'])} |"
+            f"| {len(result['new'])} |"
         )
 
     for result in results:
@@ -178,8 +183,6 @@ def render(results: list[dict], failures: list[tuple[str, str]], skipped: dict[s
             ("库内但官网已售罄", [_pair_line(pair) for pair in result["sold_out"]]),
             ("官网已找不到（--apply 时会下架）",
              [f"- {bean['name']}（`{bean['id']}`）" for bean in result["missing"]]),
-            ("待确认的匹配（名字相近但没完全对上；是同一款就把豆子的 sourceUrl 填成官网链接，不是就填 -）",
-             [_pair_line(pair) for pair in result["uncertain"]]),
             ("在售且已收录", [_pair_line(pair) for pair in result["listed"]]),
         ]
         if result["actions"]:
@@ -244,7 +247,7 @@ def main() -> int:
         print(
             f"{result['name']}: 库内 {result['bean_count']}，官网在售 {result['on_sale_count']}，"
             f"新豆 {len(result['new'])}，售罄 {len(result['sold_out'])}，"
-            f"找不到 {len(result['missing'])}，待确认 {len(result['uncertain'])}"
+            f"找不到 {len(result['missing'])}"
         )
         if args.apply:
             try:
