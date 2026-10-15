@@ -391,6 +391,11 @@ const EMPTY_STATS_OVERVIEW = {
   trendTitle: "日消耗趋势",
   trendPeriodText: "",
   trendBars: [],
+  deltaText: "",
+  deltaTone: "",
+  averageRatingText: "-",
+  summaryText: "",
+  breakdowns: { region: [], variety: [], process: [], roaster: [] },
   regionBreakdown: [],
   regionPieStyle: "",
   varietyBreakdown: [],
@@ -791,7 +796,7 @@ Page({
     recipesTitle: "自建方案",
     recipeLibraryMode: "custom",
     recipeQuickImportMode: false,
-    recipeLibraryEmptyText: "还没有保存的自建方案。",
+    recipeLibraryEmptyText: "还没有保存的自建方案，点右下角 + 新建一个。",
     dripperDeleteMode: false,
     showCustomDripperForm: false,
     overviewBeanPickerOpen: false,
@@ -855,6 +860,13 @@ Page({
       { key: "year", label: "年" }
     ],
     statsRange: "day",
+    statsBreakdownKey: "region",
+    statsBreakdownTabs: [
+      { key: "region", label: "地区" },
+      { key: "variety", label: "品种" },
+      { key: "process", label: "处理法" },
+      { key: "roaster", label: "烘焙商" }
+    ],
     statsAnchorDate: "",
     statsCalendarOpen: false,
     statsCalendarYear: new Date().getFullYear(),
@@ -868,6 +880,14 @@ Page({
     statsOverview: EMPTY_STATS_OVERVIEW,
     selectedBeanId: "",
     expandedBeanId: "",
+    expandedLogId: "",
+    walletStickyTop: 0,
+    logDetailMoreOpen: false,
+    paramMoreOpen: false,
+    recentGrindPresets: [],
+    stageActionIndex: -1,
+    expandedPickerBeanId: "",
+    expandedRecipeId: "",
     activeBeanActionId: "",
     beanTouchStartX: 0,
     beanTouchStartY: 0,
@@ -1847,16 +1867,22 @@ Page({
       : [];
     const beanStockEmptyText = beanStockMode === "empty"
       ? "还没有空袋豆子。豆子余量用完后，会自动进入这里。"
-      : "还没有在库豆子，打开右上角菜单添加。";
+      : "还没有在库豆子，点右下角 + 添加第一包。";
     const activeBeanActionId = shouldBuildBeanCards && displayBeanCards.some((bean) => bean.id === this.data.activeBeanActionId)
       ? this.data.activeBeanActionId
       : "";
+    const pickerWalletOpenId = [this.data.expandedPickerBeanId, selectedBeanId]
+      .find((id) => id && availableBeans.some((bean) => bean.id === id))
+      || (availableBeans.length ? availableBeans[availableBeans.length - 1].id : "");
     const selectedBeanCard = shouldBuildBrewBeanViews
       ? displayBeans.find((bean) => bean.id === selectedBeanId) || null
       : null;
     const expandedBeanId = beans.some((bean) => bean.id === this.data.expandedBeanId)
       ? this.data.expandedBeanId
       : "";
+    const beanWalletOpenId = expandedBeanId && displayBeanCards.some((bean) => bean.id === expandedBeanId)
+      ? expandedBeanId
+      : (displayBeanCards.length ? displayBeanCards[displayBeanCards.length - 1].id : "");
     const shouldLoadRoasterBeans = this.data.activeTab === "roasters";
     const roasters = shouldLoadRoasterBeans ? getRoasters(this.roasterImageCache) : [];
     const selectedRoasterName = shouldLoadRoasterBeans
@@ -1907,8 +1933,21 @@ Page({
       ? getPresetRecipeDisplays()
       : [];
     const displayRecipes = shouldBuildRecipeDisplays
-      ? (recipeLibraryMode === "preset" ? presetRecipeDisplays : customRecipeDisplays)
+      ? (recipeLibraryMode === "preset" ? presetRecipeDisplays : customRecipeDisplays).map((recipe) => ({
+        ...recipe,
+        cardArtStyle: buildBeanCardArtStyle(recipe.id),
+        walletSubtitleText: joinBeanCardParts([
+          recipe.dripperText === "/" ? "" : recipe.dripperText,
+          recipe.dose ? `${recipe.dose}g` : "",
+          recipe.totalTimeText
+        ])
+      }))
       : [];
+    const recipeWalletOpenId = [
+      this.data.expandedRecipeId,
+      this.data.recipeQuickImportMode ? this.data.brewRecipeSourceId : ""
+    ].find((id) => id && displayRecipes.some((recipe) => recipe.id === id))
+      || (displayRecipes.length ? displayRecipes[0].id : "");
     const selectedRecipeDetail = shouldBuildRecipeDisplays
       ? [...customRecipeDisplays, ...presetRecipeDisplays].find((recipe) => recipe.id === this.data.selectedRecipeId) || null
       : null;
@@ -1953,6 +1992,9 @@ Page({
         .map((log) => decorateLogCard(log, beansById[log.beanId]))
       : [];
     const logTotalCount = shouldBuildLogViews ? filteredLogSources.length : this.data.logTotalCount;
+    const logWalletOpenId = displayLogs.some((log) => log.id === this.data.expandedLogId)
+      ? this.data.expandedLogId
+      : (displayLogs.length ? displayLogs[0].id : "");
     const logHasMore = shouldBuildLogViews ? displayLogs.length < logTotalCount : false;
     const calendarView = shouldBuildLogViews
       ? normalizeLogCalendarView(
@@ -2044,6 +2086,19 @@ Page({
       && this.data.homeView === "dashboard";
     const minePageLocked = this.data.activeTab === "mine"
       && this.data.mineView === "profile";
+    // The bean wallet scrolls inside its own scroll-view, so the page itself stays put.
+    const beanWalletLocked = this.data.activeTab === "beans"
+      && this.data.beansView === "list";
+    const recipeWalletLocked = this.data.activeTab === "recipes"
+      && this.data.recipesView === "list";
+    const pickerWalletLocked = this.data.activeTab === "brew"
+      && !this.data.brewHomeVisible
+      && this.data.brewStep === 1
+      && this.data.overviewBeanPickerOpen;
+    const logWalletLocked = this.data.activeTab === "brew"
+      && this.data.brewHomeVisible
+      && this.data.homeView === "logs"
+      && !this.data.selectedLogId;
     const secondaryPageActive = isSecondaryPageState(this.data);
     const patch = {
       selectedBeanId,
@@ -2052,7 +2107,9 @@ Page({
       selectedRoasterBeanId,
       selectedRoasterBeanName,
       availableBeans,
+      pickerWalletOpenId,
       displayBeanCards,
+      beanWalletOpenId,
       beanLibraryMode,
       beanStockMode,
       beanShelfMode,
@@ -2060,8 +2117,9 @@ Page({
       activeBeanActionId,
       selectedBeanCard,
       displayRecipes,
+      recipeWalletOpenId,
       recipeLibraryMode,
-      recipeLibraryEmptyText: recipeLibraryMode === "preset" ? "暂无预设方案。" : "还没有保存的自建方案。",
+      recipeLibraryEmptyText: recipeLibraryMode === "preset" ? "暂无预设方案。" : "还没有保存的自建方案，点右下角 + 新建一个。",
       selectedRecipeId,
       selectedRecipeDetail,
       activeRecipeActionId,
@@ -2072,6 +2130,7 @@ Page({
       roasterBeanActiveFilterCount,
       selectedRoasterBeanDetail,
       displayLogs,
+      logWalletOpenId,
       logRenderLimit,
       logTotalCount,
       logHasMore,
@@ -2109,9 +2168,15 @@ Page({
       // across that transition avoids the native scroll component getting stuck
       // after a detail view, swipe gesture, or app background/foreground cycle.
       contentScrollY: !lockBrewScreen && !homeDashboardLocked && !minePageLocked,
+      // Wallet pages keep the shared outer scroll-view enabled (toggling it can leave the
+      // native scroller stuck on the next page) and instead size themselves to one screen.
+      walletPageActive: beanWalletLocked || logWalletLocked || pickerWalletLocked || recipeWalletLocked,
       beansTitle: this.getBeansTitle(this.data.beansView, selectedRoasterName, selectedRoasterBeanName),
       recipesTitle: this.getRecipesTitle(this.data.recipesView, selectedRecipeDetail),
       ratioDisplay: formatRatioDisplay(this.data.brewForm.dose, this.data.brewForm.water, this.data.brewForm.ratio),
+      recentGrindPresets: this.data.activeTab === "brew" && this.data.brewStep === 2
+        ? buildRecentGrindPresets(this.data.logs)
+        : this.data.recentGrindPresets,
       ratioPickerIndex: Math.max(0, RATIO_VALUES.indexOf(Number(this.data.brewForm.ratio))),
       recipeFormRatioDisplay: formatRecipeRatioDisplay(this.data.recipeForm.dose, this.data.recipeForm.water, this.data.recipeForm.ratio),
       recipeFormRatioPickerIndex: Math.max(0, RATIO_VALUES.indexOf(Number(this.data.recipeForm.ratio))),
@@ -2133,6 +2198,9 @@ Page({
       });
     }
     this.setData(patch, () => {
+      if (beanWalletLocked || logWalletLocked || pickerWalletLocked || recipeWalletLocked) {
+        this.measureWalletStickyTop();
+      }
       if (this.data.activeTab === "roasters") {
         this.queueRoasterGuideImages(patch.displayRoasters);
         this.queueRoasterGuideImages(patch.displayRoasterBeans, this.data.beansView === "roasterBeans");
@@ -3053,6 +3121,7 @@ Page({
       selectedLogEditMode: false,
       selectedLogEditForm: {},
       logRenderLimit: LOG_LIST_INITIAL_RENDER_COUNT,
+      expandedLogId: "",
       activeLogActionId: "",
       logSwipeMovingId: "",
       logSwipeStyle: "",
@@ -3086,6 +3155,7 @@ Page({
     this.setData({
       logDateFilter,
       logRenderLimit: LOG_LIST_INITIAL_RENDER_COUNT,
+      expandedLogId: "",
       logCalendarOpen: true,
       logCalendarYear: year,
       logCalendarMonth: month,
@@ -3101,6 +3171,7 @@ Page({
     this.setData({
       logDateFilter: "",
       logRenderLimit: LOG_LIST_INITIAL_RENDER_COUNT,
+      expandedLogId: "",
       activeLogActionId: "",
       logSwipeMovingId: "",
       logSwipeStyle: "",
@@ -3148,6 +3219,7 @@ Page({
       recipesView: "list",
       recipeLibraryMode: "custom",
       recipeQuickImportMode: false,
+      expandedRecipeId: "",
       editingRecipeId: "",
       selectedRecipeId: "",
       activeRecipeActionId: "",
@@ -3581,6 +3653,12 @@ Page({
     });
   },
 
+  setStatsBreakdown(event) {
+    const key = event.currentTarget.dataset.key;
+    if (!["region", "variety", "process", "roaster"].includes(key)) return;
+    this.setData({ statsBreakdownKey: key });
+  },
+
   setStatsRange(event) {
     const range = event.currentTarget.dataset.range;
     if (!["day", "week", "month", "year"].includes(range)) return;
@@ -3707,6 +3785,7 @@ Page({
     if (!["custom", "preset"].includes(mode) || mode === this.data.recipeLibraryMode) return;
     this.navigateWithContentScroll({
       recipeLibraryMode: mode,
+      expandedRecipeId: "",
       activeRecipeActionId: "",
       recipeSwipeMovingId: "",
       recipeSwipeStyle: ""
@@ -3883,6 +3962,19 @@ Page({
     if (selectedBeanId) this.persist();
   },
 
+  tapLogWalletCard(event) {
+    const id = event.currentTarget.dataset.id || "";
+    if (id === this.data.logWalletOpenId || this.data.logSwipeTapLocked || this.data.activeLogActionId) {
+      this.openBrewLogDetail(event);
+      return;
+    }
+    this.openWalletCard("log", id, { expandedLogId: id });
+  },
+
+  toggleLogDetailMore() {
+    this.setData({ logDetailMoreOpen: !this.data.logDetailMoreOpen });
+  },
+
   openBrewLogDetail(event) {
     if (this.data.logSwipeTapLocked) {
       this.setData({ logSwipeTapLocked: false });
@@ -3901,6 +3993,7 @@ Page({
     const bean = log ? this.data.beans.find((item) => item.id === log.beanId) : null;
     this.navigateWithContentScroll({
       selectedLogId: id,
+      logDetailMoreOpen: false,
       selectedLogEditMode: false,
       selectedLogEditForm: buildLogEditForm(log, bean)
     }, { scrollTop: 0 }, () => this.refreshDerived());
@@ -4242,6 +4335,16 @@ Page({
     this.setData({ beanMode: event.currentTarget.dataset.mode });
   },
 
+  // Tapping a card opens it; tapping the open card uses that bean, like the recipe library.
+  tapPickerWalletCard(event) {
+    const id = event.currentTarget.dataset.id || "";
+    if (id === this.data.pickerWalletOpenId) {
+      this.selectBeanForBrew(event);
+      return;
+    }
+    this.openWalletCard("picker", id, { expandedPickerBeanId: id });
+  },
+
   selectBeanForBrew(event) {
     this.navigateWithContentScroll({
       selectedBeanId: event.currentTarget.dataset.id,
@@ -4257,7 +4360,11 @@ Page({
 
   openBeanPickerPage() {
     this.navigateWithContentScroll(
-      { overviewBeanPickerOpen: true, beanMode: "existing" },
+      {
+        overviewBeanPickerOpen: true,
+        beanMode: "existing",
+        expandedPickerBeanId: ""
+      },
       { scrollTop: 0 },
       () => this.refreshDerived()
     );
@@ -4284,6 +4391,7 @@ Page({
       recipesView: "list",
       recipeLibraryMode,
       recipeQuickImportMode: true,
+      expandedRecipeId: "",
       editingRecipeId: "",
       selectedRecipeId: "",
       activeRecipeActionId: "",
@@ -4458,6 +4566,65 @@ Page({
       if (totalSeconds) patch["brewForm.stages"] = scaleStagesToTotal(this.data.brewForm.stages, totalSeconds);
     }
     this.setData(patch);
+  },
+
+  // − / + on the parameter page: dose moves in 0.5g, temperature in 1°C, both
+  // routed through the normal input handlers so water and stages stay in sync.
+  stepBrewParam(event) {
+    const { field } = event.currentTarget.dataset;
+    const delta = Number(event.currentTarget.dataset.delta) || 0;
+    const current = Number(this.data.brewForm[field]) || 0;
+    if (field === "dose") {
+      const dose = Math.max(0, Math.round((current + delta) * 10) / 10);
+      this.onDoseInput({ detail: { value: String(dose) } });
+      return;
+    }
+    if (field === "temperature") {
+      const temperature = Math.max(0, Math.min(100, Math.round(current + delta)));
+      this.onBrewInput({ currentTarget: { dataset: { field } }, detail: { value: String(temperature) } });
+    }
+  },
+
+  applyRecentGrind(event) {
+    const preset = (this.data.recentGrindPresets || [])[Number(event.currentTarget.dataset.index)];
+    if (!preset) return;
+    this.setData({
+      "brewForm.grinder": preset.grinder,
+      "brewForm.grind": preset.grind
+    });
+  },
+
+  toggleParamMore() {
+    this.setData({ paramMoreOpen: !this.data.paramMoreOpen });
+  },
+
+  setBrewSieve(event) {
+    const value = event.currentTarget.dataset.value;
+    this.setData({ "brewForm.sieve": this.data.brewForm.sieve === value ? "" : value });
+  },
+
+  // Steps are deleted by swiping the card left, like the other lists.
+  onStageTouchStart(event) {
+    const touch = event.touches && event.touches[0];
+    if (!touch) return;
+    this.stageTouch = { index: Number(event.currentTarget.dataset.index), x: touch.clientX, y: touch.clientY };
+  },
+
+  onStageTouchEnd(event) {
+    const start = this.stageTouch;
+    this.stageTouch = null;
+    const touch = event.changedTouches && event.changedTouches[0];
+    if (!start || !touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const next = dx < 0 ? start.index : -1;
+    if (next !== this.data.stageActionIndex) this.setData({ stageActionIndex: next });
+  },
+
+  deleteStageFromSwipe(event) {
+    this.setData({ stageActionIndex: -1 });
+    this.deleteStage(event);
   },
 
   onRatioPickerChange(event) {
@@ -5223,6 +5390,7 @@ Page({
       resumeBrewFlowOnHome: false,
       homeView: "logs",
       activeTab: "brew",
+      expandedLogId: "",
       selectedBeanId: nextSelectedBeanId,
       selectedLogId: "",
       timerElapsed: 0,
@@ -5395,10 +5563,60 @@ Page({
       });
       return;
     }
+    const cards = this.data.displayBeanCards || [];
+    // Like the recipe library: tapping the open card acts on it (start a brew),
+    // tapping any other card opens it.
+    const openCard = id === this.data.beanWalletOpenId ? cards.find((card) => card.id === id) : null;
+    if (openCard && !openCard.isEmpty) {
+      this.openBrewFlow(event);
+      return;
+    }
+    const expandedBeanId = this.data.expandedBeanId === id ? "" : id;
+    this.openWalletCard("bean", expandedBeanId || (cards.length ? cards[cards.length - 1].id : ""), {
+      expandedBeanId
+    }, Boolean(expandedBeanId));
+  },
+
+  // The page header is already sticky; the switch / filter bar under it sticks
+  // just below, so it needs the header's rendered height.
+  measureWalletStickyTop() {
+    wx.createSelectorQuery().in(this)
+      .selectAll("#page-content .panel-header, #page-content .bean-catalog-header").boundingClientRect()
+      .exec(([headers] = []) => {
+        const header = (headers || []).filter((rect) => rect && rect.height > 0).pop();
+        const height = header ? Math.round(header.height) : 0;
+        if (height !== this.data.walletStickyTop) this.setData({ walletStickyTop: height });
+      });
+  },
+
+  // Only the open-card id changes (no full refreshDerived); once that has rendered,
+  // the page scrolls so the card sits just under the sticky bars.
+  openWalletCard(kind, openId, patch, shouldFocus = true) {
     this.setData({
-      expandedBeanId: this.data.expandedBeanId === id ? "" : id
+      ...patch,
+      [`${kind}WalletOpenId`]: openId
+    }, () => {
+      if (shouldFocus && openId) this.scrollPageToWalletCard(kind, openId);
     });
-    this.refreshDerived();
+  },
+
+  scrollPageToWalletCard(kind, id) {
+    wx.createSelectorQuery().in(this)
+      .select(`#${kind}-wallet-${id}`).boundingClientRect()
+      .select("#page-content").boundingClientRect()
+      .select("#page-content").scrollOffset()
+      .selectAll("#page-content .wallet-sticky-sub").boundingClientRect()
+      .exec(([row, box, offset, subs] = []) => {
+        if (!row || !box || !offset) return;
+        const sub = (subs || []).filter((rect) => rect && rect.height > 0).pop();
+        const coveredTop = (Number(this.data.walletStickyTop) || 0) + (sub ? sub.height : 0);
+        const current = Number(offset.scrollTop) || 0;
+        const target = Math.max(0, Math.round(current + row.top - box.top - coveredTop));
+        if (Math.abs(target - current) < 2) return;
+        // Go through the page's own scroll-top binding (as navigation does) rather than
+        // driving the native scroller with scrollTo, which can leave iOS touch scrolling stuck.
+        this.setDataWithContentScroll({}, target);
+      });
   },
 
   editBean(event) {
@@ -5817,6 +6035,15 @@ Page({
       selectedRoasterBeanDetail: buildRoasterBeanDetailView(bean),
       beansTitle: bean.name || "豆子详情"
     }, 0, () => this.queueRoasterGuideImages([bean], true));
+  },
+
+  tapRecipeWalletCard(event) {
+    const id = event.currentTarget.dataset.id || "";
+    if (id === this.data.recipeWalletOpenId || this.data.recipeSwipeTapLocked || this.data.activeRecipeActionId) {
+      this.openRecipeDetail(event);
+      return;
+    }
+    this.openWalletCard("recipe", id, { expandedRecipeId: id });
   },
 
   openRecipeDetail(event) {
@@ -6636,6 +6863,10 @@ function decorateBean(bean) {
     swipeOpenStyle: `transform:translateX(-${swipeActionWidth}rpx);`,
     stockPercent,
     stockRingStyle: `background: radial-gradient(circle, #fffdf8 0 52%, transparent 53%), conic-gradient(#c79633 ${stockPercent}%, #eadcbf 0);`,
+    cardArtStyle: buildBeanCardArtStyle(bean.id || primaryName),
+    placeText: joinBeanCardParts([bean.country, bean.origin]),
+    specText: joinBeanCardParts([bean.variety, bean.process, bean.roastLevel]),
+    flavorNotesText: joinBeanCardParts(String(bean.flavorDescription || "").split(/[,，、;；/|·]+/)),
     roasterText: bean.roaster || "未填写",
     roastDateText: roastDate ? `烘焙日期 ${roastDate}` : "未填写烘焙日期",
     restingText: isEmpty ? `空袋日 ${emptiedDate || "未记录"}` : (restingDays === null ? "" : `放置 ${restingDays} 天`),
@@ -6647,6 +6878,46 @@ function decorateBean(bean) {
     roastLevelText: bean.roastLevel || "未填写",
     roastDetailText: roastDetailDate ? `${roastDetailDate}烘` : "未填写"
   };
+}
+
+const BEAN_CARD_ART_PALETTES = [
+  ["rgba(236, 178, 160, 0.72)", "rgba(214, 190, 226, 0.62)", "rgba(246, 214, 168, 0.62)"],
+  ["rgba(196, 188, 214, 0.72)", "rgba(226, 206, 196, 0.62)", "rgba(206, 214, 226, 0.62)"],
+  ["rgba(232, 200, 150, 0.72)", "rgba(220, 168, 150, 0.58)", "rgba(240, 226, 196, 0.7)"],
+  ["rgba(190, 210, 196, 0.72)", "rgba(226, 216, 180, 0.62)", "rgba(206, 196, 222, 0.58)"],
+  ["rgba(176, 136, 140, 0.58)", "rgba(230, 190, 196, 0.62)", "rgba(222, 206, 228, 0.62)"],
+  ["rgba(188, 206, 226, 0.72)", "rgba(236, 206, 186, 0.62)", "rgba(214, 222, 230, 0.62)"]
+];
+
+function hashBeanCardSeed(seed) {
+  const text = String(seed || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function buildBeanCardArtStyle(seed) {
+  const hash = hashBeanCardSeed(seed);
+  const [first, second, third] = BEAN_CARD_ART_PALETTES[hash % BEAN_CARD_ART_PALETTES.length];
+  const pick = (shift, min, span) => min + ((hash >>> shift) % span);
+  return [
+    "background-color:#f7f2ea;",
+    "background-image:",
+    `linear-gradient(${pick(3, 100, 40)}deg, transparent 42%, rgba(255, 255, 255, 0.55) 49%, transparent 56%),`,
+    `radial-gradient(ellipse at ${pick(5, 72, 28)}% ${pick(8, 0, 40)}%, ${first} 0, transparent 58%),`,
+    `radial-gradient(ellipse at ${pick(11, 60, 40)}% ${pick(14, 60, 40)}%, ${second} 0, transparent 55%),`,
+    `radial-gradient(ellipse at ${pick(17, 40, 40)}% ${pick(20, 90, 20)}%, ${third} 0, transparent 50%),`,
+    "linear-gradient(160deg, #fbf8f3 0%, #f2ebe0 100%);"
+  ].join("");
+}
+
+function joinBeanCardParts(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function decorateRecipe(recipe) {
@@ -6852,9 +7123,70 @@ function decorateLog(log, bean = null) {
     })),
     totalTimeText: log.totalTime || "",
     notesDetailText: log.notes || "暂无结果评价",
+    detailHeroArtStyle: buildBeanCardArtStyle(log.beanId || beanName || log.id),
+    detailHeroSubtitle: joinBeanCardParts([roaster, [country, origin].filter(Boolean).join(" "), process]),
+    detailKeyStats: [
+      {
+        label: "粉水比",
+        value: ratioText === "/" ? "-" : ratioText.replace(":", " : "),
+        sub: log.dose && log.water ? `${formatWater(log.dose)}g → ${formatWater(log.water)}g` : ""
+      },
+      { label: "水温", value: log.temperature === "" ? "-" : `${formatWater(log.temperature)}°C`, sub: "" },
+      { label: "总时间", value: totalSeconds ? formatTime(totalSeconds) : (log.totalTime || "-"), sub: "" },
+      { label: "研磨度", value: shortGrindText(grindSize) || "-", sub: grinder }
+    ],
+    detailListRows: [
+      { label: "滤杯", value: dripper },
+      { label: "滤纸", value: log.filterPaper || "" },
+      { label: "磨豆机", value: grinder },
+      { label: "品种", value: variety },
+      { label: "烘焙日期", value: detailRoastDateText }
+    ].filter((row) => String(row.value || "").trim()),
+    // Less common fields sit behind a "更多参数" toggle instead of showing "/" by default.
+    detailMoreRows: [
+      { label: "水质", value: log.waterQuality || "" },
+      { label: "是否筛粉", value: log.sieve || "" },
+      { label: "筛子目数", value: log.screenSize || "" },
+      { label: "研磨度说明", value: grindSize !== shortGrindText(grindSize) ? grindSize : "" }
+    ].filter((row) => row.label !== "研磨度说明" || row.value).map((row) => ({
+      ...row,
+      value: String(row.value || "").trim() || "未填写",
+      isEmpty: !String(row.value || "").trim()
+    })),
+    detailMoreFilledCount: [log.waterQuality, log.sieve, log.screenSize].filter((value) => String(value || "").trim()).length,
     temperatureText: log.temperature === "" ? "-" : log.temperature,
     dateText: formatDisplayDate(log.createdAt)
   };
+}
+
+// "中度（Ditting KR804 Lab 8.0-9.5；C40 MK4 25-28）" -> "中度": the bracketed grinder notes
+// are reference ranges, too long for cards and key stats.
+function shortGrindText(value) {
+  const text = String(value || "").trim();
+  const head = text.split(/[（(]/)[0].trim();
+  return head || text;
+}
+
+// The three most recent distinct grinder + grind setting pairs, newest first.
+function buildRecentGrindPresets(logs) {
+  const seen = new Set();
+  const presets = [];
+  for (const log of Array.isArray(logs) ? logs : []) {
+    const grinder = String((log && log.grinder) || "").trim();
+    const grind = String((log && log.grindSize) || "").trim();
+    if (!grinder && !grind) continue;
+    const key = `${grinder}|${grind}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    presets.push({
+      key,
+      grinder,
+      grind,
+      label: [grinder, shortGrindText(grind)].filter(Boolean).join(" · ")
+    });
+    if (presets.length === 3) break;
+  }
+  return presets;
 }
 
 function decorateLogCard(log, bean = null) {
@@ -6874,10 +7206,13 @@ function decorateLogCard(log, bean = null) {
       { label: "时间", value: totalSeconds ? `${totalSeconds}s` : "-" },
       { label: "粉量", value: log.dose ? `${formatWater(log.dose)}g` : "-" },
       { label: "比例", value: ratioText === "/" ? "-" : ratioText },
-      { label: "研磨度", value: grindSize || "-" }
+      { label: "研磨度", value: shortGrindText(grindSize) || "-" }
     ],
     rating,
-    ratingStarWidths: getRatingStarWidths(rating)
+    ratingStarWidths: getRatingStarWidths(rating),
+    cardArtStyle: buildBeanCardArtStyle(log.beanId || beanName || log.id),
+    subtitleText: joinBeanCardParts([roaster, formatShortDisplayDate(log.createdAt)]),
+    notesText: String(log.notes || "").trim()
   };
 }
 
@@ -6980,6 +7315,21 @@ function buildStatsOverview(logs, range, beansById = {}, anchorDateValue = "") {
   const varietyBreakdown = buildStatsCategoryBars(scopedLogs, getStatsVarietyLabel);
   const processBreakdown = buildStatsCategoryBars(scopedLogs, getStatsProcessLabel);
   const roasterBreakdown = buildStatsCategoryBars(scopedLogs, getStatsRoasterLabel);
+  const previousPeriod = getStatsPeriod(safeRange, addDays(period.start, -1));
+  const previousGrams = round(sum(allPreparedLogs
+    .filter((item) => item.date >= previousPeriod.start && item.date < previousPeriod.end)
+    .map((item) => item.log.dose)));
+  const gramsDelta = round(totalGrams - previousGrams);
+  const previousNames = { day: "前一天", week: "上周", month: "上月", year: "去年" };
+  const ratedLogs = scopedLogs.map((log) => normalizeRating(log.rating)).filter((rating) => rating > 0);
+  const averageRating = ratedLogs.length ? Math.round((sum(ratedLogs) / ratedLogs.length) * 10) / 10 : 0;
+  const topBean = buildStatsCategoryBars(scopedLogs, (log) => String(log.beanName || "").trim())[0];
+  const summaryWho = isCurrentPeriod
+    ? currentRangeNames[safeRange]
+    : formatStatsBreakdownPeriodText(period, safeRange);
+  const summaryText = brewCount
+    ? `${summaryWho}你冲了 ${brewCount} 次，用掉 ${formatWater(totalGrams)}g${topBean && topBean.label !== "未填写" ? `，喝得最多的是 ${topBean.label}` : ""}。`
+    : `${summaryWho}还没有冲煮记录。`;
   return {
     range: safeRange,
     rangeName: (isCurrentPeriod ? currentRangeNames : selectedRangeNames)[safeRange],
@@ -6995,6 +7345,18 @@ function buildStatsOverview(logs, range, beansById = {}, anchorDateValue = "") {
     trendTitle: getStatsTrendTitle(safeRange),
     trendPeriodText: getStatsTrendPeriodText(safeRange, trendPeriod, allPreparedLogs),
     trendBars,
+    deltaText: gramsDelta
+      ? `比${previousNames[safeRange]} ${gramsDelta > 0 ? "+" : "−"}${formatWater(Math.abs(gramsDelta))}g`
+      : `与${previousNames[safeRange]}持平`,
+    deltaTone: gramsDelta > 0 ? "is-up" : (gramsDelta < 0 ? "is-down" : ""),
+    averageRatingText: averageRating ? String(averageRating) : "-",
+    summaryText,
+    breakdowns: {
+      region: regionBreakdown,
+      variety: varietyBreakdown,
+      process: processBreakdown,
+      roaster: roasterBreakdown
+    },
     regionBreakdown,
     regionPieStyle: buildStatsPieStyle(regionBreakdown),
     varietyBreakdown,
@@ -7195,7 +7557,8 @@ function buildStatsCategoryBars(logs, getLabel) {
       countText: `${item.count} 次`,
       color,
       colorStyle: `background:${color};`,
-      style: `width:${width}%;`
+      style: `width:${width}%;`,
+      barStyle: `width:${width}%;background:${index === 0 ? "#b88222" : "#e2c48a"};`
     };
   });
 }

@@ -10246,3 +10246,1398 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   font-size: 23rpx;
   font-weight: 850;
 }
+
+/* Bean stock wallet: stacked art cards, the open card shows its full face. */
+.beans-view.active.bean-wallet {
+  /* minmax(0, 1fr) stops long bean names inside the scroller from widening the column. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.beans-view.active.bean-wallet > .mode-switch {
+  margin-bottom: 4rpx;
+}
+
+
+.bean-wallet-stack {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  flex-direction: column;
+  padding: 10rpx 0 72rpx;
+  overflow: hidden;
+}
+
+
+.bean-wallet-stack > .bean-swipe-row {
+  z-index: 1;
+  box-sizing: border-box;
+  margin: -76rpx 0 0;
+  padding-top: 20rpx;
+  border-radius: 0;
+}
+
+.bean-wallet-stack > .bean-swipe-row.is-first {
+  margin-top: 0;
+}
+
+.bean-wallet-stack > .bean-swipe-row > .bean-swipe-actions {
+  top: 20rpx;
+  bottom: 56rpx;
+}
+
+.bean-wallet-stack > .bean-swipe-row.is-last > .bean-swipe-actions {
+  bottom: 0;
+}
+
+.bean-wallet-stack .bean-swipe-actions .bean-card-action.danger {
+  border-radius: 0 40rpx 40rpx 0;
+}
+
+.bean-wallet-stack > .bean-swipe-row > .bean-card.wallet-card {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding: 34rpx 30rpx 90rpx 34rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  border-radius: 40rpx;
+  box-shadow:
+    0 -8rpx 24rpx rgba(80, 58, 28, 0.1),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.85);
+}
+
+.bean-wallet-stack > .bean-swipe-row.is-last > .bean-card.wallet-card {
+  padding-bottom: 34rpx;
+}
+
+.wallet-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.wallet-card-title {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.wallet-card-name {
+  display: block;
+  overflow: hidden;
+  color: #1f1a14;
+  font-size: 36rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wallet-card.is-open .wallet-card-name {
+  white-space: normal;
+}
+
+.wallet-card-roaster {
+  display: block;
+  overflow: hidden;
+  color: #4b4135;
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bean-wallet-stack > .bean-swipe-row > .bean-card.wallet-card .stock-ring.wallet-card-ring {
+  display: grid;
+  flex: 0 0 88rpx;
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 14rpx rgba(80, 58, 28, 0.12);
+  color: #241b10;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.wallet-card-face {
+  display: flex;
+  flex-direction: column;
+  gap: 44rpx;
+  margin-top: 64rpx;
+}
+
+.wallet-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.wallet-card-line {
+  color: #3b332a;
+  font-size: 27rpx;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.wallet-card-flavor {
+  color: #241b10;
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.wallet-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid rgba(60, 45, 25, 0.12);
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.wallet-card-brew-row {
+  margin-top: -16rpx;
+}
+
+.wallet-card .wallet-card-brew-button {
+  width: 100%;
+  min-height: 76rpx;
+  margin: 0;
+  font-size: 25rpx;
+}
+
+/* Brew records use the same wallet stack as the bean stock. */
+.brew-home-record-bar.log-wallet {
+  grid-template-columns: minmax(0, 1fr);
+  padding-bottom: 0;
+}
+
+@keyframes wallet-face-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wallet-card-face {
+  animation: wallet-face-in 220ms ease-out;
+}
+
+.bean-wallet-stack > .brew-log-load-more {
+  text-align: center;
+}
+
+.wallet-card-face.log-wallet-face {
+  gap: 34rpx;
+  margin-top: 48rpx;
+}
+
+.log-wallet-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8rpx;
+}
+
+.log-wallet-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+}
+
+.log-wallet-metric-value {
+  overflow: hidden;
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-wallet-metric-label {
+  color: #8a7a64;
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.wallet-card-line.log-wallet-notes {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.wallet-card-foot.log-wallet-foot {
+  align-items: center;
+}
+
+.log-wallet-foot .brew-record-rating-stars {
+  gap: 8rpx;
+}
+
+.log-wallet-foot .brew-record-rating-star {
+  font-size: 26rpx;
+}
+
+/* The bean currently chosen for this brew keeps a gold outline in the picker. */
+.bean-wallet-stack > .bean-swipe-row > .bean-card.wallet-card.is-selected {
+  border: 3rpx solid rgba(199, 150, 51, 0.7);
+}
+
+/* Stats: one summary line, three KPIs, a single-colour trend and one ranked breakdown. */
+.stats-clean .stats-summary-line {
+  display: block;
+  padding: 4rpx 6rpx 0;
+  color: #4b4135;
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.stats-clean .stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14rpx;
+}
+
+.stats-clean .stats-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+  padding: 20rpx 20rpx 18rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.18);
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.stats-clean .stats-kpi-label {
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.stats-clean .stats-kpi-value {
+  overflow: hidden;
+  color: #241b10;
+  font-size: 42rpx;
+  font-weight: 850;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-clean .stats-kpi-sub {
+  overflow: hidden;
+  color: #a39782;
+  font-size: 20rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-clean .stats-kpi-sub.is-up {
+  color: #3b6d11;
+}
+
+.stats-clean .stats-kpi-sub.is-down {
+  color: #a8462f;
+}
+
+.stats-clean .stats-card-heading > text:first-child {
+  color: #241b10;
+}
+
+.stats-clean .trend-bar-item .trend-bar-fill {
+  width: 26rpx;
+  background: #e2c48a;
+  box-shadow: none;
+  filter: none;
+}
+
+.stats-clean .trend-bar-item.is-empty .trend-bar-fill {
+  width: 20rpx;
+  min-height: 6rpx;
+  background: rgba(169, 137, 88, 0.18);
+}
+
+.stats-clean .trend-bar-item.is-active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.stats-clean .trend-bar-item.is-active .trend-bar-fill {
+  width: 30rpx;
+  background: #9d6812;
+  box-shadow: none;
+}
+
+.stats-clean .trend-bar-item .trend-bar-value {
+  color: transparent;
+}
+
+.stats-clean .trend-bar-item.is-active .trend-bar-value {
+  color: #9d6812;
+}
+
+.stats-clean .trend-bar-item.is-active .trend-bar-label,
+.stats-clean .trend-bar-item.is-active .trend-bar-sub-label {
+  color: #241b10;
+}
+
+.stats-clean .stats-rank-period {
+  color: #a39782;
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.stats-clean .stats-rank-tabs {
+  display: flex;
+  gap: 10rpx;
+  margin: 18rpx 0 22rpx;
+}
+
+.stats-clean .stats-rank-tab {
+  padding: 8rpx 22rpx;
+  border-radius: 999rpx;
+  color: #8a7a64;
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.stats-clean .stats-rank-tab.active {
+  background: #fbf3df;
+  color: #9d6812;
+}
+
+.stats-clean .stats-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+}
+
+.stats-clean .stats-rank-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.stats-clean .stats-rank-name {
+  overflow: hidden;
+  color: #241b10;
+  font-size: 26rpx;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-clean .stats-rank-value {
+  flex: 0 0 auto;
+  color: #8a7a64;
+  font-size: 23rpx;
+  font-weight: 600;
+}
+
+.stats-clean .stats-rank-track {
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #f5efe4;
+}
+
+.stats-clean .stats-rank-fill {
+  height: 12rpx;
+  border-radius: 999rpx;
+}
+
+/* Recipe library uses the same wallet stack; the open card shows its pour curve. */
+.recipe-view.active.bean-wallet {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.recipe-view.active.bean-wallet > .mode-switch {
+  margin-bottom: 4rpx;
+}
+
+.recipe-view.active.bean-wallet > .recipe-quick-import-tip {
+  margin-bottom: 8rpx;
+}
+
+.wallet-card-face.recipe-wallet-face {
+  gap: 24rpx;
+  margin-top: 36rpx;
+}
+
+.recipe-wallet-face .recipe-bar-preview {
+  margin: 0;
+}
+
+.recipe-wallet-face .recipe-stats {
+  margin-top: 0;
+}
+
+.recipe-wallet-card .wallet-card-head > .recipe-quick-selected-badge {
+  flex: 0 0 auto;
+}
+
+/* Card wallet pages scroll with the page itself (no nested scroller, which can
+   leave iOS touch scrolling stuck on the next page). The page header is sticky,
+   and the switch / filter bar sticks right under it. */
+.wallet-page-active .bean-catalog-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #ffffff;
+}
+
+.wallet-page-active .wallet-sticky-sub {
+  position: sticky;
+  top: var(--wallet-sticky-top, 0px);
+  z-index: 25;
+  box-shadow: 0 0 0 14rpx #ffffff;
+}
+
+.wallet-page-active .brew-log-calendar-filter.wallet-sticky-sub {
+  background: #ffffff;
+}
+
+/* Brew detail (view mode): a hero card in the bean's colours, four key numbers,
+   a short equipment list, and the rarer fields behind a "更多参数" toggle. */
+.log-detail-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 30rpx 30rpx 26rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  border-radius: 32rpx;
+  box-shadow: 0 10rpx 26rpx rgba(80, 58, 28, 0.08);
+}
+
+.log-detail-hero-title {
+  color: #1f1a14;
+  font-size: 38rpx;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.log-detail-hero-sub {
+  color: #4b4135;
+  font-size: 25rpx;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.log-detail-hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18rpx;
+}
+
+.log-detail-hero-foot .brew-record-rating-stars {
+  gap: 8rpx;
+}
+
+.log-detail-hero-foot .brew-record-rating-star {
+  font-size: 28rpx;
+}
+
+.log-detail-unrated {
+  color: #8a7a64;
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.log-detail-hero-date {
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.log-detail-key-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+}
+
+.log-detail-key {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.18);
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.log-detail-key-label {
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.log-detail-key-value {
+  overflow: hidden;
+  color: #241b10;
+  font-size: 40rpx;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-detail-key-sub {
+  overflow: hidden;
+  color: #a39782;
+  font-size: 21rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-detail-list {
+  padding: 4rpx 24rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.18);
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.log-detail-list-row,
+.log-detail-more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  min-height: 84rpx;
+  border-bottom: 1rpx solid #f1eadc;
+  font-size: 26rpx;
+}
+
+.log-detail-list-row > text:first-child,
+.log-detail-more-toggle > text:first-child {
+  flex: 0 0 auto;
+  color: #8a7a64;
+  font-weight: 600;
+}
+
+.log-detail-list-row > text:last-child {
+  overflow: hidden;
+  color: #241b10;
+  font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-detail-list-row.is-empty > text:last-child {
+  color: #c4b8a4;
+  font-weight: 500;
+}
+
+.log-detail-list > view:last-child,
+.log-detail-more-toggle:last-child {
+  border-bottom: 0;
+}
+
+.log-detail-more-toggle-hover {
+  opacity: 0.7;
+}
+
+.log-detail-more-hint {
+  color: #b88222;
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.log-detail-more-arrow {
+  display: inline-block;
+  margin-left: 8rpx;
+  transition: transform 160ms ease;
+}
+
+.log-detail-more-toggle.is-open .log-detail-more-arrow {
+  transform: rotate(180deg);
+}
+
+/* The add action is a round button in the bottom-right corner instead of a
+   full-width bar, so it no longer competes with buttons inside the cards. */
+.fixed-add-action {
+  right: 36rpx;
+  bottom: calc(160rpx + env(safe-area-inset-bottom));
+  left: auto;
+  width: 108rpx;
+  height: 108rpx;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 12rpx 28rpx rgba(157, 104, 18, 0.32);
+}
+
+.fixed-add-action-fill {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 50%;
+  font-size: 54rpx;
+  font-weight: 400;
+}
+
+.fixed-add-action-hover .fixed-add-action-fill {
+  transform: scale(0.94);
+}
+
+/* Brew prep: the chosen bean shows as its wallet card, with dripper and recipe side by side. */
+.prepare-choice-list.prepare-wallet {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.prepare-bean-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 26rpx 28rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  border-radius: 32rpx;
+  box-shadow: 0 10rpx 26rpx rgba(80, 58, 28, 0.08);
+}
+
+.prepare-bean-card.is-empty {
+  border: 2rpx dashed rgba(199, 150, 51, 0.45);
+  background: #fffdf8;
+  box-shadow: none;
+}
+
+.prepare-bean-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+}
+
+.prepare-bean-name {
+  overflow: hidden;
+  color: #1f1a14;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prepare-bean-sub {
+  overflow: hidden;
+  color: #4b4135;
+  font-size: 24rpx;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prepare-bean-card .stock-ring.prepare-bean-ring {
+  display: grid;
+  flex: 0 0 88rpx;
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 14rpx rgba(80, 58, 28, 0.12);
+  color: #241b10;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.prepare-bean-plus {
+  display: grid;
+  flex: 0 0 72rpx;
+  width: 72rpx;
+  height: 72rpx;
+  place-items: center;
+  border-radius: 50%;
+  background: #c79633;
+  color: #ffffff;
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.prepare-tile-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.prepare-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.18);
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.prepare-tile.is-selected {
+  border-color: rgba(199, 150, 51, 0.55);
+  background: #fffaf0;
+}
+
+.prepare-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prepare-tile-label {
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.prepare-tile-value {
+  overflow: hidden;
+  color: #241b10;
+  font-size: 28rpx;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prepare-tile.is-empty .prepare-tile-value {
+  color: #b88222;
+}
+
+.prepare-tile-clear {
+  display: grid;
+  width: 36rpx;
+  height: 36rpx;
+  place-items: center;
+  border-radius: 50%;
+  background: #eadcbf;
+  color: #6e5b43;
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.prepare-tile-hover {
+  opacity: 0.78;
+}
+
+/* Small fixes: unrated records, empty-state action, nickname placeholder. */
+.log-wallet-unrated {
+  color: #a39782;
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.empty-state-action {
+  align-self: center;
+  margin-top: 24rpx;
+  padding: 16rpx 48rpx;
+  border-radius: 999rpx;
+  background: #241b10;
+  color: #fffdf8;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.empty-state-action-hover {
+  opacity: 0.8;
+}
+
+.mine-nickname-placeholder {
+  color: #c4b8a4;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.mine-record-summary {
+  display: block;
+  margin-top: 4rpx;
+  color: #9d6812;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+/* Leave room under the last card so it can scroll clear of the round add button. */
+.beans-view.has-fixed-add-action,
+.recipe-view.has-fixed-add-action {
+  padding-bottom: 180rpx;
+}
+
+/* Once a dripper is chosen its icon sits beside the name, as in the old row. */
+.prepare-tile.prepare-dripper-tile {
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.prepare-tile.prepare-dripper-tile.is-selected {
+  border-color: rgba(199, 150, 51, 0.18);
+  background: #ffffff;
+}
+
+.prepare-dripper-icon {
+  display: grid;
+  flex: 0 0 76rpx;
+  width: 76rpx;
+  height: 76rpx;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f7f0e2;
+}
+
+.prepare-dripper-icon .dripper-icon {
+  width: 76rpx;
+  height: 76rpx;
+}
+
+.prepare-tile-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+}
+
+/* Long bean / dripper / recipe names end in "…" instead of widening the prep area. */
+.prepare-choice-list.prepare-wallet,
+.prepare-bean-card,
+.prepare-tile-row,
+.prepare-tile {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.prepare-choice-list.prepare-wallet {
+  width: 100%;
+}
+
+.prepare-bean-name,
+.prepare-bean-sub,
+.prepare-tile-value,
+.prepare-tile-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Parameter page: core numbers as big tiles, grind as one card with recent
+   presets, rarer fields folded away, and steps as cards under a time bar. */
+.parameter-list.param-grouped,
+.steps-section-card.param-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.steps-section-card.param-steps {
+  margin-top: 28rpx;
+}
+
+.param-group-title {
+  display: block;
+  margin: 8rpx 4rpx 0;
+  color: #8a7a64;
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.param-core-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.param-core-tile,
+.param-card,
+.param-time-hero {
+  box-sizing: border-box;
+  min-width: 0;
+  border: 1rpx solid rgba(199, 150, 51, 0.2);
+  border-radius: 28rpx;
+  background: #ffffff;
+}
+
+.param-core-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  height: 100%;
+  padding: 22rpx 20rpx;
+}
+
+.param-core-label {
+  display: block;
+  overflow: hidden;
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.param-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
+.param-step-button {
+  display: grid;
+  flex: 0 0 56rpx;
+  width: 56rpx;
+  height: 56rpx;
+  place-items: center;
+  border-radius: 50%;
+  background: #f7f0e2;
+  color: #241b10;
+  font-size: 32rpx;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.param-step-button.is-small {
+  flex-basis: 46rpx;
+  width: 46rpx;
+  height: 46rpx;
+  font-size: 28rpx;
+}
+
+.param-step-button-hover {
+  opacity: 0.65;
+}
+
+.param-core-value {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4rpx;
+  min-width: 0;
+  color: #241b10;
+  font-size: 44rpx;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.param-core-input {
+  width: 3.2em;
+  min-height: 0;
+  height: 1.3em;
+  color: #241b10;
+  font-size: 44rpx;
+  font-weight: 850;
+  text-align: center;
+}
+
+.param-unit {
+  color: #b88222;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.param-ratio-value {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.param-picker-arrow {
+  margin-left: 10rpx;
+  color: #b88222;
+  font-size: 28rpx;
+}
+
+.param-card {
+  padding: 4rpx 26rpx;
+}
+
+.param-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  min-height: 92rpx;
+  border-bottom: 1rpx solid #f1eadc;
+  font-size: 27rpx;
+}
+
+.param-card > .param-card-row:last-child,
+.param-card > .param-recent-row:last-child {
+  border-bottom: 0;
+}
+
+.param-card-row > text:first-child {
+  flex: 0 0 auto;
+  color: #6e5b43;
+  font-weight: 650;
+}
+
+.param-card-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 700;
+  text-align: right;
+}
+
+.param-recent-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 0 20rpx;
+}
+
+.param-recent-label {
+  color: #a39782;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.param-recent-chip {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #fbf3df;
+  color: #9d6812;
+  font-size: 22rpx;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.param-recent-chip.is-active {
+  background: #241b10;
+  color: #fffdf8;
+}
+
+.param-more-hint {
+  color: #b88222;
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.param-more-arrow {
+  display: inline-block;
+  margin-left: 8rpx;
+  transition: transform 160ms ease;
+}
+
+.param-more-toggle.is-open .param-more-arrow {
+  transform: rotate(180deg);
+}
+
+.param-segment {
+  display: flex;
+  padding: 4rpx;
+  border-radius: 999rpx;
+  background: #f7f0e2;
+}
+
+.param-segment-option {
+  padding: 8rpx 30rpx;
+  border-radius: 999rpx;
+  color: #6e5b43;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.param-segment-option.active {
+  background: #241b10;
+  color: #fffdf8;
+}
+
+.param-time-hero {
+  padding: 24rpx 26rpx 20rpx;
+}
+
+.param-time-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.param-time-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.param-time-input {
+  width: 5em;
+  height: 1.25em;
+  min-height: 0;
+  color: #241b10;
+  font-size: 64rpx;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.param-time-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.param-time-summary-strong {
+  color: #241b10;
+  font-size: 26rpx;
+  font-weight: 750;
+}
+
+.param-timeline {
+  display: flex;
+  gap: 4rpx;
+  height: 18rpx;
+  margin-top: 22rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+}
+
+.param-timeline-labels {
+  display: flex;
+  gap: 4rpx;
+  margin-top: 8rpx;
+  color: #8a7a64;
+  font-size: 20rpx;
+  font-weight: 650;
+}
+
+.param-timeline-labels > text {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.param-tone-0 {
+  background: #e2c48a;
+}
+
+.param-tone-1 {
+  background: #d6ab5c;
+}
+
+.param-tone-2 {
+  background: #c79633;
+}
+
+.param-tone-3 {
+  background: #9d6812;
+}
+
+.param-stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.param-stage-swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26rpx;
+}
+
+.param-stage-delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  width: 140rpx;
+  place-items: center;
+  background: #f3d7d1;
+  color: #9f3f30;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.param-stage-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 52rpx minmax(0, 1fr);
+  align-items: center;
+  gap: 18rpx;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.2);
+  border-radius: 26rpx;
+  background: #ffffff;
+  transition: transform 180ms ease;
+}
+
+.param-stage-swipe.actions-open > .param-stage-card {
+  transform: translateX(-140rpx);
+}
+
+.param-stage-index {
+  display: grid;
+  width: 48rpx;
+  height: 48rpx;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.param-stage-index.param-tone-0 {
+  color: #412402;
+}
+
+.param-stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  min-width: 0;
+}
+
+.param-stage-name {
+  width: 100%;
+  min-height: 0;
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.param-stage-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+}
+
+.param-stage-range {
+  flex: 0 0 auto;
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.param-stage-chip {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f7f0e2;
+  color: #5b4f40;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.param-stage-chip.is-water {
+  background: #fbf3df;
+  color: #633806;
+}
+
+.param-stage-chip input {
+  width: 2.4em;
+  min-height: 0;
+  height: 1.4em;
+  font-size: 22rpx;
+  font-weight: 800;
+  text-align: center;
+}
+
+.param-stage-duration {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.param-stage-seconds {
+  display: flex;
+  align-items: baseline;
+  color: #241b10;
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.param-stage-seconds input {
+  width: 2em;
+  min-height: 0;
+  height: 1.3em;
+  font-size: 26rpx;
+  font-weight: 800;
+  text-align: right;
+}
+
+.param-add-stage {
+  padding: 20rpx 0;
+  border: 2rpx dashed rgba(199, 150, 51, 0.6);
+  border-radius: 999rpx;
+  color: #9d6812;
+  font-size: 26rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.param-stage-tip {
+  display: block;
+  color: #b9ad98;
+  font-size: 21rpx;
+  text-align: center;
+}
+
+.param-core-grid > picker {
+  display: block;
+  min-width: 0;
+}
+
+/* The open card itself is the action (like the recipe library), so a quiet hint
+   replaces the black button. */
+.wallet-card-tap-hint {
+  margin-top: -18rpx;
+  color: #b88222;
+  font-size: 24rpx;
+  font-weight: 700;
+  text-align: right;
+}
