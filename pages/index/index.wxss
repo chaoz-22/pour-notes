@@ -11641,3 +11641,272 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   font-weight: 700;
   text-align: right;
 }
+
+/* Brew detail pour section: same time bar and step cards as the parameter page. */
+.pour-summary {
+  margin-top: 8rpx;
+}
+
+.pour-total-time {
+  color: #241b10;
+  font-size: 60rpx;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.pour-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 26rpx;
+}
+
+.param-stage-card.pour-step-card {
+  border-color: rgba(199, 150, 51, 0.16);
+  background: #fffdf9;
+}
+
+.pour-step-text {
+  display: block;
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.pour-step-seconds {
+  flex: 0 0 auto;
+  min-width: 64rpx;
+  color: #241b10;
+  font-size: 26rpx;
+  font-weight: 800;
+  text-align: right;
+}
+
+/* The floating tab bar is ~180rpx tall from the bottom edge; leave clear room so
+   the rating at the end of the brew detail isn't hidden behind it. */
+.brew-detail-active .content {
+  padding-bottom: calc(240rpx + env(safe-area-inset-bottom));
+}
+
+/* Recipe detail mirrors the brew detail layout. */
+.recipe-detail-card .recipe-detail-keys {
+  margin-top: 8rpx;
+}
+
+.recipe-detail-card .recipe-detail-list {
+  margin-top: 16rpx;
+}
+
+.recipe-detail-card .recipe-detail-pour-title {
+  margin-top: 32rpx;
+}
+
+.recipe-view.active > .recipe-detail-card {
+  margin-bottom: calc(110rpx + env(safe-area-inset-bottom));
+}
+
+/* Keep detail pages inside the screen: long values truncate in the list and wrap
+   in "更多参数" instead of widening the card. */
+.recipe-view.active {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.recipe-detail-card,
+.log-detail-list,
+.log-detail-key-grid {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.log-detail-list-row > text:last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.log-detail-list-row.is-more {
+  align-items: flex-start;
+  padding: 24rpx 0;
+}
+
+.log-detail-list-row.is-more > text:last-child {
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-all;
+}
+
+/* Pour bar: one column per step with the cumulative water above, the step number
+   in the segment, and the start time below (end time under the last one) — the
+   same information as the old curve chart, without overlapping labels. */
+.pour-bar {
+  display: flex;
+  gap: 4rpx;
+  margin-top: 22rpx;
+}
+
+.pour-bar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 76rpx;
+}
+
+.pour-bar-water {
+  display: block;
+  overflow: hidden;
+  color: #241b10;
+  font-size: 22rpx;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pour-bar-seg {
+  display: flex;
+  align-items: center;
+  height: 34rpx;
+  padding: 0 10rpx;
+  border-radius: 8rpx;
+}
+
+.pour-bar-col:first-child .pour-bar-seg {
+  border-radius: 999rpx 8rpx 8rpx 999rpx;
+}
+
+.pour-bar-col:last-child .pour-bar-seg {
+  border-radius: 8rpx 999rpx 999rpx 8rpx;
+}
+
+.pour-bar-col:only-child .pour-bar-seg {
+  border-radius: 999rpx;
+}
+
+.pour-bar-seg > text {
+  color: #ffffff;
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
+.pour-bar-seg.param-tone-0 > text {
+  color: #412402;
+}
+
+.pour-bar-times {
+  display: flex;
+  justify-content: space-between;
+  color: #8a7a64;
+  font-size: 20rpx;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* A step whose temperature differs from the brew's main temperature stands out. */
+.param-stage-chip.is-temp-diff {
+  background: #fbe3d6;
+  color: #993c1d;
+}
+
+/* Clearer edge where each stacked card sits on the one before it. */
+.bean-wallet-stack > .bean-swipe-row > .bean-card.wallet-card {
+  border: 1rpx solid rgba(255, 255, 255, 0.9);
+  border-top: 2rpx solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 -12rpx 28rpx rgba(70, 50, 24, 0.16),
+    0 -1rpx 0 rgba(70, 50, 24, 0.08),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Recipe editor uses the same grouped cards as the brew parameter page. */
+.recipe-form {
+  min-width: 0;
+}
+
+.recipe-form-notes {
+  padding: 20rpx 26rpx;
+}
+
+.recipe-form-notes-input {
+  width: 100%;
+  min-height: 120rpx;
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.recipe-form textarea.param-stage-name,
+.recipe-form textarea.recipe-form-notes-input {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.recipe-form textarea.param-stage-name {
+  min-height: 0;
+  font-size: 27rpx;
+  font-weight: 650;
+}
+
+/* Brew prep: more air between the bean card, the dripper / recipe tiles and the
+   parameter panel. */
+.prepare-choice-list.prepare-wallet {
+  gap: 28rpx;
+}
+
+.prepare-tile-row {
+  gap: 24rpx;
+}
+
+.fixed-brew-screen .parameter-orb {
+  margin-top: 96rpx;
+}
+
+/* Add / edit bean: grouped cards like the brew and recipe editors. */
+.bean-form-grouped .bean-ocr-card {
+  margin-bottom: 4rpx;
+}
+
+.bean-form-roast-value {
+  color: #241b10;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.bean-form-roast-value.is-empty {
+  color: #b9ad98;
+  font-weight: 500;
+}
+
+.bean-form-core-value {
+  justify-content: flex-start;
+}
+
+.param-core-input.bean-form-date-input {
+  width: 100%;
+  font-size: 36rpx;
+  text-align: left;
+}
+
+.bean-form-grouped .param-core-input {
+  text-align: left;
+}
+
+.bean-form-grouped .bean-form-save-button {
+  width: 100%;
+  min-height: 96rpx;
+  margin: 24rpx 0 0;
+  border-radius: 24rpx;
+  background: #c79633;
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 850;
+  line-height: 96rpx;
+  box-shadow: 0 18rpx 42rpx rgba(151, 111, 38, 0.22);
+}
+
+.mine-record-summary {
+  width: 100%;
+  text-align: center;
+}

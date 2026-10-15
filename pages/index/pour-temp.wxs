@@ -1,0 +1,30 @@
+// Summary temperature for a list of steps: "92°C" when they agree, "88–94°C" when they differ.
+function range(stages, fallback) {
+  var values = [];
+  var list = stages || [];
+  for (var i = 0; i < list.length; i++) {
+    var raw = list[i].temperature;
+    if (raw === "" || raw === undefined || raw === null) raw = fallback;
+    var value = parseFloat(raw);
+    if (!isNaN(value)) values.push(value);
+  }
+  if (!values.length) {
+    var only = parseFloat(fallback);
+    return isNaN(only) ? "-" : only + "°C";
+  }
+  var min = values[0];
+  var max = values[0];
+  for (var j = 1; j < values.length; j++) {
+    if (values[j] < min) min = values[j];
+    if (values[j] > max) max = values[j];
+  }
+  return min === max ? min + "°C" : min + "–" + max + "°C";
+}
+// True when a step has its own temperature that differs from the main brew temperature.
+function differs(value, main) {
+  if (value === "" || value === undefined || value === null) return false;
+  var a = parseFloat(value);
+  var b = parseFloat(main);
+  return !isNaN(a) && !isNaN(b) && a !== b;
+}
+module.exports = { range: range, differs: differs };

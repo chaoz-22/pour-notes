@@ -884,6 +884,8 @@ Page({
     walletStickyTop: 0,
     logDetailMoreOpen: false,
     paramMoreOpen: false,
+    recipeDetailMoreOpen: false,
+    recipeFormMoreOpen: false,
     recentGrindPresets: [],
     stageActionIndex: -1,
     expandedPickerBeanId: "",
@@ -1858,12 +1860,12 @@ Page({
     const shouldBuildBrewBeanViews = this.data.activeTab === "brew" && !this.data.brewHomeVisible;
     const shouldBuildBeanDisplays = shouldBuildBeanCards || shouldBuildBrewBeanViews;
     const displayBeans = shouldBuildBeanDisplays ? beans.map((bean) => decorateBean(bean)) : [];
-    const availableBeans = shouldBuildBrewBeanViews ? displayBeans.filter((bean) => !bean.isEmpty) : [];
+    const availableBeans = shouldBuildBrewBeanViews ? withDistinctCardArt(displayBeans.filter((bean) => !bean.isEmpty)) : [];
     const beanLibraryMode = this.data.beanLibraryMode === "roaster" ? "roaster" : "stock";
     const beanStockMode = this.data.beanStockMode === "empty" ? "empty" : "active";
     const beanShelfMode = beanLibraryMode === "roaster" ? "roaster" : beanStockMode;
     const displayBeanCards = shouldBuildBeanCards
-      ? displayBeans.filter((bean) => beanStockMode === "empty" ? bean.isEmpty : !bean.isEmpty)
+      ? withDistinctCardArt(displayBeans.filter((bean) => beanStockMode === "empty" ? bean.isEmpty : !bean.isEmpty))
       : [];
     const beanStockEmptyText = beanStockMode === "empty"
       ? "还没有空袋豆子。豆子余量用完后，会自动进入这里。"
@@ -1933,15 +1935,16 @@ Page({
       ? getPresetRecipeDisplays()
       : [];
     const displayRecipes = shouldBuildRecipeDisplays
-      ? (recipeLibraryMode === "preset" ? presetRecipeDisplays : customRecipeDisplays).map((recipe) => ({
+      ? withDistinctCardArt((recipeLibraryMode === "preset" ? presetRecipeDisplays : customRecipeDisplays).map((recipe) => ({
         ...recipe,
+        artSeed: recipe.id,
         cardArtStyle: buildBeanCardArtStyle(recipe.id),
         walletSubtitleText: joinBeanCardParts([
           recipe.dripperText === "/" ? "" : recipe.dripperText,
           recipe.dose ? `${recipe.dose}g` : "",
           recipe.totalTimeText
         ])
-      }))
+      })))
       : [];
     const recipeWalletOpenId = [
       this.data.expandedRecipeId,
@@ -1991,6 +1994,7 @@ Page({
         .slice(0, logRenderLimit)
         .map((log) => decorateLogCard(log, beansById[log.beanId]))
       : [];
+    const displayLogCards = withDistinctCardArt(displayLogs);
     const logTotalCount = shouldBuildLogViews ? filteredLogSources.length : this.data.logTotalCount;
     const logWalletOpenId = displayLogs.some((log) => log.id === this.data.expandedLogId)
       ? this.data.expandedLogId
@@ -2129,7 +2133,7 @@ Page({
       roasterBeanFilterGroups,
       roasterBeanActiveFilterCount,
       selectedRoasterBeanDetail,
-      displayLogs,
+      displayLogs: displayLogCards,
       logWalletOpenId,
       logRenderLimit,
       logTotalCount,
@@ -3971,6 +3975,10 @@ Page({
     this.openWalletCard("log", id, { expandedLogId: id });
   },
 
+  toggleRecipeDetailMore() {
+    this.setData({ recipeDetailMoreOpen: !this.data.recipeDetailMoreOpen });
+  },
+
   toggleLogDetailMore() {
     this.setData({ logDetailMoreOpen: !this.data.logDetailMoreOpen });
   },
@@ -4620,6 +4628,31 @@ Page({
     if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
     const next = dx < 0 ? start.index : -1;
     if (next !== this.data.stageActionIndex) this.setData({ stageActionIndex: next });
+  },
+
+  // Same − / + steps as the brew parameter page, for the recipe editor.
+  stepRecipeParam(event) {
+    const { field } = event.currentTarget.dataset;
+    const delta = Number(event.currentTarget.dataset.delta) || 0;
+    const current = Number(this.data.recipeForm[field]) || 0;
+    if (field === "dose") {
+      const dose = Math.max(0, Math.round((current + delta) * 10) / 10);
+      this.onRecipeDoseInput({ currentTarget: { dataset: { scope: "recipeForm" } }, detail: { value: String(dose) } });
+      return;
+    }
+    if (field === "temperature") {
+      const temperature = Math.max(0, Math.min(100, Math.round(current + delta)));
+      this.onRecipeFormInput({ currentTarget: { dataset: { field } }, detail: { value: String(temperature) } });
+    }
+  },
+
+  toggleRecipeFormMore() {
+    this.setData({ recipeFormMoreOpen: !this.data.recipeFormMoreOpen });
+  },
+
+  deleteRecipeStageFromSwipe(event) {
+    this.setData({ stageActionIndex: -1 });
+    this.deleteRecipeStage(event);
   },
 
   deleteStageFromSwipe(event) {
@@ -5574,7 +5607,7 @@ Page({
     const expandedBeanId = this.data.expandedBeanId === id ? "" : id;
     this.openWalletCard("bean", expandedBeanId || (cards.length ? cards[cards.length - 1].id : ""), {
       expandedBeanId
-    }, Boolean(expandedBeanId));
+    });
   },
 
   // The page header is already sticky; the switch / filter bar under it sticks
@@ -5589,34 +5622,14 @@ Page({
       });
   },
 
-  // Only the open-card id changes (no full refreshDerived); once that has rendered,
-  // the page scrolls so the card sits just under the sticky bars.
-  openWalletCard(kind, openId, patch, shouldFocus = true) {
+  // Only the open-card id changes (no full refreshDerived). The page scroll position is
+  // deliberately left alone: setting scroll-top right after a tap, while iOS may still be
+  // tracking the touch or momentum, intermittently freezes touch scrolling on device.
+  openWalletCard(kind, openId, patch) {
     this.setData({
       ...patch,
       [`${kind}WalletOpenId`]: openId
-    }, () => {
-      if (shouldFocus && openId) this.scrollPageToWalletCard(kind, openId);
     });
-  },
-
-  scrollPageToWalletCard(kind, id) {
-    wx.createSelectorQuery().in(this)
-      .select(`#${kind}-wallet-${id}`).boundingClientRect()
-      .select("#page-content").boundingClientRect()
-      .select("#page-content").scrollOffset()
-      .selectAll("#page-content .wallet-sticky-sub").boundingClientRect()
-      .exec(([row, box, offset, subs] = []) => {
-        if (!row || !box || !offset) return;
-        const sub = (subs || []).filter((rect) => rect && rect.height > 0).pop();
-        const coveredTop = (Number(this.data.walletStickyTop) || 0) + (sub ? sub.height : 0);
-        const current = Number(offset.scrollTop) || 0;
-        const target = Math.max(0, Math.round(current + row.top - box.top - coveredTop));
-        if (Math.abs(target - current) < 2) return;
-        // Go through the page's own scroll-top binding (as navigation does) rather than
-        // driving the native scroller with scrollTo, which can leave iOS touch scrolling stuck.
-        this.setDataWithContentScroll({}, target);
-      });
   },
 
   editBean(event) {
@@ -6070,6 +6083,7 @@ Page({
     if (!recipe) return;
     this.navigateWithContentScroll({
       recipesView: "detail",
+      recipeDetailMoreOpen: false,
       selectedRecipeId: recipe.id,
       editingRecipeId: "",
       activeRecipeActionId: "",
@@ -6863,6 +6877,7 @@ function decorateBean(bean) {
     swipeOpenStyle: `transform:translateX(-${swipeActionWidth}rpx);`,
     stockPercent,
     stockRingStyle: `background: radial-gradient(circle, #fffdf8 0 52%, transparent 53%), conic-gradient(#c79633 ${stockPercent}%, #eadcbf 0);`,
+    artSeed: bean.id || primaryName,
     cardArtStyle: buildBeanCardArtStyle(bean.id || primaryName),
     placeText: joinBeanCardParts([bean.country, bean.origin]),
     specText: joinBeanCardParts([bean.variety, bean.process, bean.roastLevel]),
@@ -6880,13 +6895,17 @@ function decorateBean(bean) {
   };
 }
 
+// Eight clearly different hue families (each with its own tinted base), so stacked
+// cards are easy to tell apart at a glance.
 const BEAN_CARD_ART_PALETTES = [
-  ["rgba(236, 178, 160, 0.72)", "rgba(214, 190, 226, 0.62)", "rgba(246, 214, 168, 0.62)"],
-  ["rgba(196, 188, 214, 0.72)", "rgba(226, 206, 196, 0.62)", "rgba(206, 214, 226, 0.62)"],
-  ["rgba(232, 200, 150, 0.72)", "rgba(220, 168, 150, 0.58)", "rgba(240, 226, 196, 0.7)"],
-  ["rgba(190, 210, 196, 0.72)", "rgba(226, 216, 180, 0.62)", "rgba(206, 196, 222, 0.58)"],
-  ["rgba(176, 136, 140, 0.58)", "rgba(230, 190, 196, 0.62)", "rgba(222, 206, 228, 0.62)"],
-  ["rgba(188, 206, 226, 0.72)", "rgba(236, 206, 186, 0.62)", "rgba(214, 222, 230, 0.62)"]
+  { base: ["#fbf1ef", "#f4e2df"], blobs: ["rgba(232, 156, 150, 0.78)", "rgba(244, 196, 182, 0.7)", "rgba(220, 172, 200, 0.55)"] },
+  { base: ["#fcf3e8", "#f6e4d0"], blobs: ["rgba(240, 172, 118, 0.78)", "rgba(250, 212, 166, 0.7)", "rgba(228, 156, 136, 0.5)"] },
+  { base: ["#fbf5e4", "#f3e7c8"], blobs: ["rgba(226, 184, 100, 0.82)", "rgba(242, 216, 146, 0.7)", "rgba(208, 168, 116, 0.5)"] },
+  { base: ["#f1f5ec", "#e2eada"], blobs: ["rgba(160, 196, 148, 0.78)", "rgba(208, 222, 176, 0.7)", "rgba(140, 186, 164, 0.5)"] },
+  { base: ["#edf5f4", "#dcebe9"], blobs: ["rgba(132, 194, 190, 0.75)", "rgba(186, 222, 214, 0.7)", "rgba(160, 192, 222, 0.5)"] },
+  { base: ["#eff3f9", "#dde5f2"], blobs: ["rgba(148, 180, 226, 0.78)", "rgba(198, 214, 238, 0.7)", "rgba(176, 164, 222, 0.5)"] },
+  { base: ["#f4f0f9", "#e7dff2"], blobs: ["rgba(184, 160, 226, 0.78)", "rgba(222, 204, 238, 0.7)", "rgba(236, 184, 208, 0.5)"] },
+  { base: ["#f5efe9", "#e8ddd2"], blobs: ["rgba(182, 140, 116, 0.72)", "rgba(220, 192, 170, 0.7)", "rgba(166, 134, 146, 0.5)"] }
 ];
 
 function hashBeanCardSeed(seed) {
@@ -6898,19 +6917,36 @@ function hashBeanCardSeed(seed) {
   return hash;
 }
 
-function buildBeanCardArtStyle(seed) {
+function getBeanCardPaletteIndex(seed) {
+  return hashBeanCardSeed(seed) % BEAN_CARD_ART_PALETTES.length;
+}
+
+function buildBeanCardArtStyle(seed, paletteIndex = getBeanCardPaletteIndex(seed)) {
   const hash = hashBeanCardSeed(seed);
-  const [first, second, third] = BEAN_CARD_ART_PALETTES[hash % BEAN_CARD_ART_PALETTES.length];
+  const palette = BEAN_CARD_ART_PALETTES[paletteIndex % BEAN_CARD_ART_PALETTES.length];
+  const [first, second, third] = palette.blobs;
   const pick = (shift, min, span) => min + ((hash >>> shift) % span);
   return [
-    "background-color:#f7f2ea;",
+    `background-color:${palette.base[0]};`,
     "background-image:",
     `linear-gradient(${pick(3, 100, 40)}deg, transparent 42%, rgba(255, 255, 255, 0.55) 49%, transparent 56%),`,
     `radial-gradient(ellipse at ${pick(5, 72, 28)}% ${pick(8, 0, 40)}%, ${first} 0, transparent 58%),`,
     `radial-gradient(ellipse at ${pick(11, 60, 40)}% ${pick(14, 60, 40)}%, ${second} 0, transparent 55%),`,
     `radial-gradient(ellipse at ${pick(17, 40, 40)}% ${pick(20, 90, 20)}%, ${third} 0, transparent 50%),`,
-    "linear-gradient(160deg, #fbf8f3 0%, #f2ebe0 100%);"
+    `linear-gradient(160deg, ${palette.base[0]} 0%, ${palette.base[1]} 100%);`
   ].join("");
+}
+
+// For stacked lists: keep each item's own colour, but never let two neighbouring
+// cards share a palette, so the stack doesn't blur together.
+function withDistinctCardArt(items) {
+  let previous = -1;
+  return (Array.isArray(items) ? items : []).map((item) => {
+    let paletteIndex = getBeanCardPaletteIndex(item.artSeed);
+    if (paletteIndex === previous) paletteIndex = (paletteIndex + 1) % BEAN_CARD_ART_PALETTES.length;
+    previous = paletteIndex;
+    return { ...item, cardArtStyle: buildBeanCardArtStyle(item.artSeed, paletteIndex) };
+  });
 }
 
 function joinBeanCardParts(parts) {
@@ -6947,7 +6983,51 @@ function decorateRecipe(recipe) {
     targetText: recipe.target || "",
     stepsText: stepsText || "/",
     timelinePoints: timeline.points,
-    timelineSegments: timeline.segments
+    timelineSegments: timeline.segments,
+    ...buildRecipeDetailView(recipe, stages, { grinder, grind, totalTimeText })
+  };
+}
+
+// Same layout as the brew detail: four key numbers, a short equipment list, rarer
+// fields behind "更多参数", and step cards under a proportional time bar.
+function buildRecipeDetailView(recipe, stages, { grinder, grind, totalTimeText }) {
+  const dose = Number(recipe.dose) || 0;
+  const water = Math.round(Number(recipe.water) || dose * (Number(recipe.ratio) || 0));
+  const ice = Math.round(Number(recipe.ice) || 0);
+  const temperature = recipe.temperature === "" || recipe.temperature === undefined ? "" : `${recipe.temperature}°C`;
+  return {
+    detailKeyStats: [
+      {
+        label: "粉水比",
+        value: recipe.ratio ? `1 : ${formatWater(recipe.ratio)}` : "-",
+        sub: dose && water ? `${formatWater(dose)}g → ${formatWater(water)}g${ice ? ` + 冰 ${ice}g` : ""}` : ""
+      },
+      { label: "水温", value: temperature || "-", sub: "" },
+      { label: "冲煮时间", value: totalTimeText || "-", sub: "" },
+      { label: "研磨度", value: shortGrindText(grind) || "-", sub: grinder }
+    ],
+    detailListRows: [
+      { label: "滤杯", value: recipe.dripper || "" },
+      { label: "滤纸", value: recipe.filterPaper || "" },
+      { label: "磨豆机", value: grinder },
+      { label: "冰块", value: ice ? `${ice}g` : "" }
+    ].filter((row) => String(row.value || "").trim()),
+    detailMoreRows: [
+      { label: "水质", value: recipe.waterQuality || "" },
+      { label: "研磨度说明", value: grind !== shortGrindText(grind) ? grind : "" }
+    ].filter((row) => row.label !== "研磨度说明" || row.value).map((row) => ({
+      ...row,
+      value: String(row.value || "").trim() || "未填写",
+      isEmpty: !String(row.value || "").trim()
+    })),
+    detailMoreFilledCount: [recipe.waterQuality].filter((value) => String(value || "").trim()).length,
+    detailStages: stages.map((stage, index) => ({
+      ...stage,
+      index: index + 1,
+      spanSeconds: Math.max(1, Number(stage.duration) || 1),
+      spanText: `${Number(stage.duration) || 0}s`,
+      waterText: stage.cumulativeWater ? `${formatWater(stage.cumulativeWater)}g` : ""
+    }))
   };
 }
 
@@ -7124,6 +7204,8 @@ function decorateLog(log, bean = null) {
     totalTimeText: log.totalTime || "",
     notesDetailText: log.notes || "暂无结果评价",
     detailHeroArtStyle: buildBeanCardArtStyle(log.beanId || beanName || log.id),
+    detailPourTotalText: log.totalTime
+      || (waterStages.length ? formatTime(waterStages[waterStages.length - 1].timelineTime || 0) : "-"),
     detailHeroSubtitle: joinBeanCardParts([roaster, [country, origin].filter(Boolean).join(" "), process]),
     detailKeyStats: [
       {
@@ -7210,6 +7292,7 @@ function decorateLogCard(log, bean = null) {
     ],
     rating,
     ratingStarWidths: getRatingStarWidths(rating),
+    artSeed: log.beanId || beanName || log.id,
     cardArtStyle: buildBeanCardArtStyle(log.beanId || beanName || log.id),
     subtitleText: joinBeanCardParts([roaster, formatShortDisplayDate(log.createdAt)]),
     notesText: String(log.notes || "").trim()
@@ -7253,6 +7336,10 @@ function decorateLogWaterStages(log) {
       waterText: stage.water ? `${formatWater(stage.water)}g` : "",
       timeText: endTime ? formatTime(endTime) : "",
       rangeText: `${formatTime(startTime)}-${formatTime(endTime)}`,
+      startText: formatTime(startTime),
+      endText: formatTime(endTime),
+      spanSeconds: Math.max(1, endTime - startTime),
+      spanText: `${Math.max(0, endTime - startTime)}s`,
       temperatureText: stage.temperature === "" || stage.temperature === null || stage.temperature === undefined
         ? "-"
         : `${stage.temperature}°C`,
@@ -7734,6 +7821,8 @@ function decorateStages(stages, fallbackTemperature = "") {
       temperatureDisplay: temperature === "" || temperature === null || temperature === undefined ? "-" : `${temperature}°C`,
       start,
       end,
+      startText: formatTime(start),
+      endText: formatTime(end),
       rangeText: `${formatTime(start)}-${formatTime(end)}`
     };
   });

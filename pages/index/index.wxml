@@ -1,3 +1,4 @@
+<wxs module="pourTemp" src="./pour-temp.wxs"></wxs>
 <import src="../../templates/roaster-bean-detail.wxml" />
 <import src="../../templates/flavor-page.wxml" />
 
@@ -892,35 +893,43 @@
                 <view class="brew-detail-section-heading">
                   <text>注水</text>
                 </view>
-                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="brew-detail-water-chart">
-                  <view class="brew-detail-water-plot">
-                    <view class="brew-detail-line-axis"></view>
-                    <view wx:for="{{selectedLogDetail.waterTimelinePoints}}" wx:for-item="point" wx:key="id" class="brew-detail-line-guide" style="{{point.guideStyle}}"></view>
-                    <view wx:for="{{selectedLogDetail.waterTimelineSegments}}" wx:for-item="segment" wx:key="id" class="brew-detail-line-segment" style="{{segment.style}}"></view>
-                    <view wx:for="{{selectedLogDetail.waterTimelinePoints}}" wx:for-item="point" wx:key="id" class="brew-detail-line-dot" style="{{point.style}}"></view>
-                    <block wx:for="{{selectedLogDetail.waterTimelinePoints}}" wx:for-item="point" wx:key="id">
-                      <text wx:if="{{point.timeText}}" class="brew-detail-line-time {{point.edgeClass}}" style="{{point.timeLabelStyle}}">{{point.timeText}}</text>
-                    </block>
-                    <view wx:for="{{selectedLogDetail.waterTimelinePoints}}" wx:for-item="point" wx:key="id" class="brew-detail-line-water-label {{point.edgeClass}}" style="{{point.waterLabelStyle}}">{{point.waterText}}</view>
-                  </view>
-                </view>
-                <view wx:else class="brew-detail-empty-line"></view>
-                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="recipe-detail-steps-heading brew-detail-steps-heading">冲煮步骤</view>
-                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="recipe-browse-steps brew-detail-steps">
-                  <view wx:for="{{selectedLogDetail.waterStages}}" wx:key="id" class="recipe-browse-step">
-                    <view class="recipe-browse-step-copy">
-                      <text class="recipe-browse-step-index">{{item.index}}.</text>
-                      <text class="recipe-browse-step-instruction">{{item.instructionText}}</text>
+                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="pour-summary">
+                  <view class="param-time-head">
+                    <view class="param-time-main">
+                      <text class="param-core-label">总时间</text>
+                      <text class="pour-total-time">{{selectedLogDetail.detailPourTotalText}}</text>
                     </view>
-                    <view class="recipe-browse-step-meta">
-                      <text class="recipe-browse-step-time">{{item.rangeText}}</text>
-                      <view class="recipe-browse-step-values">
-                        <text class="recipe-browse-step-water">{{item.water}}g</text>
-                        <text class="recipe-browse-step-temperature">{{item.temperatureText}}</text>
+                    <view class="param-time-summary">
+                      <text>{{selectedLogDetail.waterStages.length}} 个步骤</text>
+                      <text class="param-time-summary-strong">{{selectedLogDetail.water ? selectedLogDetail.water + 'g · ' : ''}}{{pourTemp.range(selectedLogDetail.waterStages, selectedLogDetail.temperature)}}</text>
+                    </view>
+                  </view>
+                  <view class="pour-bar">
+                    <view wx:for="{{selectedLogDetail.waterStages}}" wx:key="id" class="pour-bar-col" style="flex: {{item.spanSeconds}} 1 0;">
+                      <text class="pour-bar-water">{{item.waterText}}</text>
+                      <view class="pour-bar-seg param-tone-{{index % 4}}"><text>{{index + 1}}</text></view>
+                      <view class="pour-bar-times">
+                        <text>{{item.startText}}</text>
+                        <text wx:if="{{index === selectedLogDetail.waterStages.length - 1}}">{{item.endText}}</text>
                       </view>
                     </view>
                   </view>
                 </view>
+                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="pour-step-list">
+                  <view wx:for="{{selectedLogDetail.waterStages}}" wx:key="id" class="param-stage-card pour-step-card">
+                    <view class="param-stage-index param-tone-{{index % 4}}">{{item.index}}</view>
+                    <view class="param-stage-body">
+                      <text class="pour-step-text">{{item.instructionText}}</text>
+                      <view class="param-stage-meta">
+                        <text class="param-stage-range">{{item.rangeText}}</text>
+                        <text wx:if="{{item.waterText}}" class="param-stage-chip is-water">至 {{item.waterText}}</text>
+                        <text class="param-stage-chip {{pourTemp.differs(item.temperature, selectedLogDetail.temperature) ? 'is-temp-diff' : ''}}">{{item.temperatureText}}</text>
+                        <text class="pour-step-seconds">{{item.spanText}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view wx:else class="brew-detail-empty-line"></view>
               </view>
 
               <view class="brew-detail-card brew-detail-wide-card">
@@ -1311,14 +1320,18 @@
               </label>
               <view class="param-time-summary">
                 <text>{{brewForm.stages.length}} 个步骤</text>
-                <text class="param-time-summary-strong">{{brewForm.water || 0}}g · {{brewForm.temperature || '-'}}°C</text>
+                <text class="param-time-summary-strong">{{brewForm.water || 0}}g · {{pourTemp.range(brewForm.stages, brewForm.temperature)}}</text>
               </view>
             </view>
-            <view class="param-timeline">
-              <view wx:for="{{brewForm.stages}}" wx:key="id" class="param-timeline-segment param-tone-{{index % 4}}" style="flex: {{item.duration}} 1 0;"></view>
-            </view>
-            <view class="param-timeline-labels">
-              <text wx:for="{{brewForm.stages}}" wx:key="id" style="flex: {{item.duration}} 1 0;">{{index + 1}}</text>
+            <view class="pour-bar">
+              <view wx:for="{{brewForm.stages}}" wx:key="id" class="pour-bar-col" style="flex: {{item.duration}} 1 0;">
+                <text class="pour-bar-water">{{item.cumulativeWater}}g</text>
+                <view class="pour-bar-seg param-tone-{{index % 4}}"><text>{{index + 1}}</text></view>
+                <view class="pour-bar-times">
+                  <text>{{item.startText}}</text>
+                  <text wx:if="{{index === brewForm.stages.length - 1}}">{{item.endText}}</text>
+                </view>
+              </view>
             </view>
           </view>
           <view class="steps-editor param-stage-list">
@@ -1331,7 +1344,7 @@
                   <view class="param-stage-meta">
                     <text class="param-stage-range">{{item.rangeText}}</text>
                     <label class="param-stage-chip is-water"><text>至</text><input id="parameter-stage-water-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{item.cumulativeWater}}" data-index="{{index}}" data-field="cumulativeWater" bindinput="onStageInput" /><text>g</text></label>
-                    <label class="param-stage-chip"><input id="parameter-stage-temperature-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{item.temperature}}" data-index="{{index}}" data-field="temperature" bindinput="onStageInput" /><text>°C</text></label>
+                    <label class="param-stage-chip {{pourTemp.differs(item.temperature, brewForm.temperature) ? 'is-temp-diff' : ''}}"><input id="parameter-stage-temperature-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{item.temperature}}" data-index="{{index}}" data-field="temperature" bindinput="onStageInput" /><text>°C</text></label>
                     <view class="param-stage-duration">
                       <view class="param-step-button is-small" hover-class="param-step-button-hover" hover-stay-time="80" data-index="{{index}}" data-delta="-1" bindtap="adjustStageDuration">−</view>
                       <label class="param-stage-seconds"><input id="parameter-stage-duration-{{index}}" type="number" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" value="{{item.duration}}" data-index="{{index}}" data-field="duration" bindfocus="onParameterInputFocus" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onStageInput" bindblur="onStageDurationBlur" /><text>s</text></label>
@@ -1514,7 +1527,7 @@
       </view>
 
       <view wx:if="{{beansView === 'add'}}" class="beans-view active">
-        <view class="form-grid parameter-list add-bean-form bean-form-list">
+        <view class="parameter-list param-grouped bean-form-grouped">
           <view wx:if="{{!editingBeanId}}" class="bean-ocr-card">
             <view class="bean-ocr-trigger" hover-class="bean-ocr-trigger-active" bindtap="scanBeanLabel">
               <image class="bean-ocr-camera" src="../../assets/icons/bean-camera.png" mode="aspectFit"></image>
@@ -1524,19 +1537,37 @@
               <text class="bean-ocr-entry">›</text>
             </view>
           </view>
-          <label class="parameter-row bean-form-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>风味描述</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" /></label>
-          <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
-            <view class="parameter-row bean-form-row bean-form-picker-row"><text>烘焙度</text><text class="bean-form-picker-value">{{beanForm.roastLevel || ''}}</text></view>
-          </picker>
-          <label class="parameter-row bean-form-row"><text>重量</text><view class="parameter-input-with-unit"><input adjust-position="{{true}}" cursor-spacing="24" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="unit">g</text></view></label>
-          <label class="parameter-row bean-form-row"><text>烘焙日期</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
-          <button class="primary-button bean-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
+          <text class="param-group-title">基本信息</text>
+          <view class="param-card">
+            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
+          </view>
+          <text class="param-group-title">产地与处理</text>
+          <view class="param-card">
+            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
+            <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
+              <view class="param-card-row bean-form-roast-row"><text>烘焙度</text><text class="bean-form-roast-value {{beanForm.roastLevel ? '' : 'is-empty'}}">{{beanForm.roastLevel || '选择'}}<text class="param-picker-arrow">⌄</text></text></view>
+            </picker>
+          </view>
+          <text class="param-group-title">风味描述</text>
+          <view class="param-card recipe-form-notes">
+            <textarea class="recipe-form-notes-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" />
+          </view>
+          <text class="param-group-title">库存</text>
+          <view class="param-core-grid">
+            <view class="param-core-tile">
+              <text class="param-core-label">重量</text>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
+            </view>
+            <view class="param-core-tile">
+              <text class="param-core-label">烘焙日期</text>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
+            </view>
+          </view>
+          <button class="primary-button bean-form-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
         </view>
       </view>
     </view>
@@ -1571,20 +1602,38 @@
       </view>
 
       <view wx:if="{{beansView === 'add'}}" class="beans-view active">
-        <view class="form-grid parameter-list add-bean-form bean-form-list">
-          <label class="parameter-row bean-form-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
-          <label class="parameter-row bean-form-row"><text>风味描述</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" /></label>
-          <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
-            <view class="parameter-row bean-form-row bean-form-picker-row"><text>烘焙度</text><text class="bean-form-picker-value">{{beanForm.roastLevel || ''}}</text></view>
-          </picker>
-          <label class="parameter-row bean-form-row"><text>重量</text><view class="parameter-input-with-unit"><input adjust-position="{{true}}" cursor-spacing="24" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="unit">g</text></view></label>
-          <label class="parameter-row bean-form-row"><text>烘焙日期</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
-          <button class="primary-button bean-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
+        <view class="parameter-list param-grouped bean-form-grouped">
+          <text class="param-group-title">基本信息</text>
+          <view class="param-card">
+            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
+          </view>
+          <text class="param-group-title">产地与处理</text>
+          <view class="param-card">
+            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
+            <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
+              <view class="param-card-row bean-form-roast-row"><text>烘焙度</text><text class="bean-form-roast-value {{beanForm.roastLevel ? '' : 'is-empty'}}">{{beanForm.roastLevel || '选择'}}<text class="param-picker-arrow">⌄</text></text></view>
+            </picker>
+          </view>
+          <text class="param-group-title">风味描述</text>
+          <view class="param-card recipe-form-notes">
+            <textarea class="recipe-form-notes-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" />
+          </view>
+          <text class="param-group-title">库存</text>
+          <view class="param-core-grid">
+            <view class="param-core-tile">
+              <text class="param-core-label">重量</text>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
+            </view>
+            <view class="param-core-tile">
+              <text class="param-core-label">烘焙日期</text>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
+            </view>
+          </view>
+          <button class="primary-button bean-form-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
         </view>
       </view>
 
@@ -1724,56 +1773,69 @@
       <view wx:if="{{recipesView === 'detail' && selectedRecipeDetail}}" class="recipe-view active">
         <view class="card recipe-card recipe-detail-card">
           <view class="recipe-detail-section-title">方案参数</view>
-          <view class="recipe-readonly-info-list">
-            <view><text>咖啡粉</text><text>{{selectedRecipeDetail.dose}}g</text></view>
-            <view><text>注水量</text><text>{{selectedRecipeDetail.water}}g</text></view>
-            <view wx:if="{{selectedRecipeDetail.ice}}"><text>冰块</text><text>{{selectedRecipeDetail.ice}}g</text></view>
-            <view><text>粉水比</text><text>{{selectedRecipeDetail.ratioText}}</text></view>
-            <view><text>水温</text><text>{{selectedRecipeDetail.temperatureDisplay}}</text></view>
-            <view><text>滤杯</text><text>{{selectedRecipeDetail.dripperText}}</text></view>
-            <view><text>磨豆机</text><text>{{selectedRecipeDetail.grinderText}}</text></view>
-            <view><text>研磨度</text><text>{{selectedRecipeDetail.grindSizeText}}</text></view>
-            <view><text>水质</text><text>{{selectedRecipeDetail.waterQualityText}}</text></view>
-            <view><text>滤纸</text><text>{{selectedRecipeDetail.filterPaperText}}</text></view>
-            <view><text>冲煮时间</text><text>{{selectedRecipeDetail.totalTimeText}}</text></view>
+          <view class="log-detail-key-grid recipe-detail-keys">
+            <view wx:for="{{selectedRecipeDetail.detailKeyStats}}" wx:key="label" class="log-detail-key">
+              <text class="log-detail-key-label">{{item.label}}</text>
+              <text class="log-detail-key-value">{{item.value}}</text>
+              <text wx:if="{{item.sub}}" class="log-detail-key-sub">{{item.sub}}</text>
+            </view>
+          </view>
+          <view class="log-detail-list recipe-detail-list">
+            <view wx:for="{{selectedRecipeDetail.detailListRows}}" wx:key="label" class="log-detail-list-row">
+              <text>{{item.label}}</text>
+              <text>{{item.value}}</text>
+            </view>
+            <view class="log-detail-more-toggle {{recipeDetailMoreOpen ? 'is-open' : ''}}" hover-class="log-detail-more-toggle-hover" hover-stay-time="100" bindtap="toggleRecipeDetailMore">
+              <text>更多参数</text>
+              <text class="log-detail-more-hint">{{recipeDetailMoreOpen ? '收起' : (selectedRecipeDetail.detailMoreFilledCount ? '已填 ' + selectedRecipeDetail.detailMoreFilledCount + ' 项' : '水质')}}<text class="log-detail-more-arrow">⌄</text></text>
+            </view>
+            <block wx:if="{{recipeDetailMoreOpen}}">
+              <view wx:for="{{selectedRecipeDetail.detailMoreRows}}" wx:key="label" class="log-detail-list-row is-more {{item.isEmpty ? 'is-empty' : ''}}">
+                <text>{{item.label}}</text>
+                <text>{{item.value}}</text>
+              </view>
+            </block>
           </view>
           <view class="recipe-detail-note-block">
             <text class="recipe-detail-note-label">备注</text>
             <text class="recipe-detail-note-value {{selectedRecipeDetail.targetText ? '' : 'is-empty'}}">{{selectedRecipeDetail.targetText || '/'}}</text>
           </view>
-          <view class="recipe-bar-preview recipe-detail-preview">
-            <view class="recipe-bar-heading">
-              <text>冲煮方案预览</text>
-              <text>累计水量(G)</text>
+          <view class="recipe-detail-section-title recipe-detail-pour-title">注水</view>
+          <view wx:if="{{selectedRecipeDetail.detailStages.length > 0}}" class="pour-summary">
+            <view class="param-time-head">
+              <view class="param-time-main">
+                <text class="param-core-label">总时间</text>
+                <text class="pour-total-time">{{selectedRecipeDetail.totalTimeText}}</text>
+              </view>
+              <view class="param-time-summary">
+                <text>{{selectedRecipeDetail.detailStages.length}} 个步骤</text>
+                <text class="param-time-summary-strong">{{selectedRecipeDetail.water ? selectedRecipeDetail.water + 'g · ' : ''}}{{pourTemp.range(selectedRecipeDetail.detailStages, selectedRecipeDetail.temperature)}}</text>
+              </view>
             </view>
-            <view class="recipe-line-chart">
-              <view class="recipe-line-plot">
-                <view class="recipe-line-axis"></view>
-                <view wx:for="{{selectedRecipeDetail.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-guide" style="{{point.guideStyle}}"></view>
-                <view wx:for="{{selectedRecipeDetail.timelineSegments}}" wx:for-item="segment" wx:key="id" class="recipe-line-segment" style="{{segment.style}}"></view>
-                <view wx:for="{{selectedRecipeDetail.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-dot" style="{{point.style}}"></view>
-                <block wx:for="{{selectedRecipeDetail.timelinePoints}}" wx:for-item="point" wx:key="id">
-                  <text wx:if="{{point.timeText}}" class="recipe-line-time {{point.edgeClass}}" style="{{point.timeLabelStyle}}">{{point.timeText}}</text>
-                </block>
-                <view wx:for="{{selectedRecipeDetail.timelinePoints}}" wx:for-item="point" wx:key="id" class="recipe-line-water-label {{point.edgeClass}}" style="{{point.waterLabelStyle}}">{{point.waterText}}</view>
+            <view class="pour-bar">
+              <view wx:for="{{selectedRecipeDetail.detailStages}}" wx:key="id" class="pour-bar-col" style="flex: {{item.spanSeconds}} 1 0;">
+                <text class="pour-bar-water">{{item.waterText}}</text>
+                <view class="pour-bar-seg param-tone-{{index % 4}}"><text>{{index + 1}}</text></view>
+                <view class="pour-bar-times">
+                  <text>{{item.startText}}</text>
+                  <text wx:if="{{index === selectedRecipeDetail.detailStages.length - 1}}">{{item.endText}}</text>
+                </view>
               </view>
             </view>
           </view>
-          <view class="recipe-detail-steps-heading">冲煮步骤</view>
-          <view class="recipe-browse-steps">
-              <view wx:for="{{selectedRecipeDetail.stages}}" wx:key="id" class="recipe-browse-step">
-                <view class="recipe-browse-step-copy">
-                  <text class="recipe-browse-step-index">{{index + 1}}.</text>
-                  <text class="recipe-browse-step-instruction">{{item.instructionText}}</text>
-                </view>
-                <view class="recipe-browse-step-meta">
-                  <text class="recipe-browse-step-time">{{item.rangeText}}</text>
-                  <view class="recipe-browse-step-values">
-                    <text class="recipe-browse-step-water">{{item.cumulativeWater}}g</text>
-                    <text class="recipe-browse-step-temperature">{{item.temperatureDisplay}}</text>
-                  </view>
+          <view wx:if="{{selectedRecipeDetail.detailStages.length > 0}}" class="pour-step-list">
+            <view wx:for="{{selectedRecipeDetail.detailStages}}" wx:key="id" class="param-stage-card pour-step-card">
+              <view class="param-stage-index param-tone-{{index % 4}}">{{item.index}}</view>
+              <view class="param-stage-body">
+                <text class="pour-step-text">{{item.instructionText}}</text>
+                <view class="param-stage-meta">
+                  <text class="param-stage-range">{{item.rangeText}}</text>
+                  <text wx:if="{{item.waterText}}" class="param-stage-chip is-water">至 {{item.waterText}}</text>
+                  <text class="param-stage-chip {{pourTemp.differs(item.temperature, selectedRecipeDetail.temperature) ? 'is-temp-diff' : ''}}">{{item.temperatureDisplay}}</text>
+                  <text class="pour-step-seconds">{{item.spanText}}</text>
                 </view>
               </view>
+            </view>
           </view>
           <view class="recipe-card-actions recipe-browse-actions recipe-detail-actions">
             <button class="primary-button" bindtap="applySelectedRecipe">使用方案</button>
@@ -1783,46 +1845,107 @@
 
       <view wx:if="{{recipesView === 'add'}}" class="recipe-view active">
         <view class="recipe-form">
-          <view class="parameter-list recipe-identity-list recipe-parameter-list">
-            <label class="parameter-row"><text>方案名称</text><input id="recipe-name" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：甜感 V60" value="{{recipeForm.name}}" data-field="name" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row"><text>咖啡粉</text><view class="parameter-input-with-unit"><input id="recipe-dose" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：15" value="{{recipeForm.dose}}" data-scope="recipeForm" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeDoseInput" /><text class="unit">g</text></view></label>
-            <label class="parameter-row"><text>注水量</text><view class="parameter-input-with-unit"><input id="recipe-water" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：225" value="{{recipeForm.water}}" data-scope="recipeForm" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeWaterInput" /><text class="unit">g</text></view></label>
-            <picker mode="selector" range="{{ratioLabels}}" value="{{recipeFormRatioPickerIndex}}" data-scope="recipeForm" bindchange="onRecipeRatioPickerChange">
-              <view class="parameter-row ratio-parameter-row"><text class="ratio-parameter-label">粉水比</text><text class="ratio-parameter-value">{{recipeFormRatioDisplay}}</text></view>
-            </picker>
-            <label class="parameter-row"><text>水温</text><view class="parameter-input-with-unit"><input id="recipe-temperature" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：92" value="{{recipeForm.temperature}}" data-field="temperature" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /><text class="unit">°C</text></view></label>
-            <label class="parameter-row"><text>滤杯</text><input id="recipe-dripper" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：Hario V60" value="{{recipeForm.dripper}}" data-field="dripper" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row"><text>磨豆机</text><input id="recipe-grinder" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：C40" value="{{recipeForm.grinder}}" data-field="grinder" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row"><text>研磨度</text><input id="recipe-grind" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" placeholder="例：24" value="{{recipeForm.grind}}" data-field="grind" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row"><text>水质</text><input id="recipe-water-quality" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{recipeForm.waterQuality}}" data-field="waterQuality" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row"><text>滤纸</text><input id="recipe-filter-paper" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{recipeForm.filterPaper}}" data-field="filterPaper" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
-            <label class="parameter-row recipe-notes-row"><text>备注</text><textarea id="recipe-notes" adjust-position="{{false}}" fixed="{{true}}" cursor-spacing="24" value="{{recipeForm.target}}" data-field="target" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" /></label>
+          <view class="parameter-list param-grouped recipe-form-grouped">
+            <view class="param-card">
+              <label class="param-card-row"><text>方案名称</text><input id="recipe-name" placeholder="例：甜感 V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.name}}" data-field="name" bindinput="onRecipeFormInput" /></label>
+            </view>
+            <text class="param-group-title">核心参数</text>
+            <view class="param-core-grid">
+              <view class="param-core-tile">
+                <text class="param-core-label">咖啡粉</text>
+                <view class="param-stepper">
+                  <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="dose" data-delta="-0.5" bindtap="stepRecipeParam">−</view>
+                  <label class="param-core-value"><input id="recipe-dose" class="param-core-input" type="digit" placeholder="15" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dose}}" data-scope="recipeForm" bindinput="onRecipeDoseInput" /><text class="param-unit">g</text></label>
+                  <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="dose" data-delta="0.5" bindtap="stepRecipeParam">+</view>
+                </view>
+              </view>
+              <view class="param-core-tile">
+                <text class="param-core-label">水温</text>
+                <view class="param-stepper">
+                  <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="temperature" data-delta="-1" bindtap="stepRecipeParam">−</view>
+                  <label class="param-core-value"><input id="recipe-temperature" class="param-core-input" type="digit" placeholder="92" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.temperature}}" data-field="temperature" bindinput="onRecipeFormInput" /><text class="param-unit">°C</text></label>
+                  <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="temperature" data-delta="1" bindtap="stepRecipeParam">+</view>
+                </view>
+              </view>
+              <picker mode="selector" range="{{ratioLabels}}" value="{{recipeFormRatioPickerIndex}}" data-scope="recipeForm" bindchange="onRecipeRatioPickerChange">
+                <view class="param-core-tile">
+                  <text class="param-core-label">粉水比</text>
+                  <view class="param-core-value param-ratio-value"><text>{{recipeFormRatioDisplay || '选择'}}</text><text class="param-picker-arrow">⌄</text></view>
+                </view>
+              </picker>
+              <view class="param-core-tile">
+                <text class="param-core-label">注水量 · 按粉水比自动算</text>
+                <label class="param-core-value"><input id="recipe-water" class="param-core-input" type="digit" placeholder="225" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.water}}" data-scope="recipeForm" bindinput="onRecipeWaterInput" /><text class="param-unit">g</text></label>
+              </view>
+            </view>
+            <text class="param-group-title">器具与研磨</text>
+            <view class="param-card">
+              <label class="param-card-row"><text>滤杯</text><input id="recipe-dripper" placeholder="例：Hario V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dripper}}" data-field="dripper" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>磨豆机</text><input id="recipe-grinder" placeholder="例：C40" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grinder}}" data-field="grinder" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>研磨度</text><input id="recipe-grind" placeholder="例：24" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grind}}" data-field="grind" bindinput="onRecipeFormInput" /></label>
+            </view>
+            <view class="param-card">
+              <view class="param-card-row param-more-toggle {{recipeFormMoreOpen ? 'is-open' : ''}}" hover-class="param-step-button-hover" hover-stay-time="80" bindtap="toggleRecipeFormMore">
+                <text>更多参数</text>
+                <text class="param-more-hint">{{recipeFormMoreOpen ? '收起' : ((recipeForm.waterQuality || recipeForm.filterPaper) ? '已填写' : '水质 · 滤纸')}}<text class="param-more-arrow">⌄</text></text>
+              </view>
+              <block wx:if="{{recipeFormMoreOpen}}">
+                <label class="param-card-row"><text>水质</text><input id="recipe-water-quality" placeholder="例：农夫山泉" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.waterQuality}}" data-field="waterQuality" bindinput="onRecipeFormInput" /></label>
+                <label class="param-card-row"><text>滤纸</text><input id="recipe-filter-paper" placeholder="例：Hario 01" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.filterPaper}}" data-field="filterPaper" bindinput="onRecipeFormInput" /></label>
+              </block>
+            </view>
+            <text class="param-group-title">备注</text>
+            <view class="param-card recipe-form-notes">
+              <textarea id="recipe-notes" class="recipe-form-notes-input" auto-height adjust-position="{{false}}" fixed="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="风格、注意事项等" value="{{recipeForm.target}}" data-field="target" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" />
+            </view>
           </view>
-          <view class="steps-section-card recipe-steps-section-card">
-            <label class="parameter-row steps-total-time-row"><text>冲煮时间</text><input id="recipe-total-time" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{recipeForm.totalTime}}" data-field="totalTime" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" placeholder="例：2:00" /></label>
-            <view class="steps-section-heading">步骤调整</view>
-            <view class="steps-editor recipe-steps-editor">
-              <view wx:for="{{recipeForm.stages}}" wx:key="id" id="recipe-stage-editor-row-{{index}}" class="stage-row">
-              <view class="stage-delete-button" data-scope="recipeForm" data-index="{{index}}" bindtap="deleteRecipeStage">
-                <image class="stage-control-image" src="../../assets/icons/stage-delete.png" mode="aspectFit"></image>
-              </view>
-              <view class="stage-meta-row">
-                <label class="stage-water-note stage-meta-field">
-                  <text>累积水量(G):</text>
-                  <input id="recipe-stage-water-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{item.cumulativeWater}}" data-scope="recipeForm" data-index="{{index}}" data-field="cumulativeWater" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeStageInput" />
+          <view class="steps-section-card param-steps">
+            <text class="param-group-title">冲煮时间与步骤</text>
+            <view class="param-time-hero">
+              <view class="param-time-head">
+                <label class="param-time-main">
+                  <text class="param-core-label">总时间 · 点击修改</text>
+                  <input id="recipe-total-time" class="param-time-input" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.totalTime}}" data-field="totalTime" bindinput="onRecipeFormInput" placeholder="2:00" />
                 </label>
-                <label class="stage-temperature-note stage-meta-field">
-                  <text>水温(°C):</text>
-                  <input id="recipe-stage-temperature-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{item.temperature}}" data-scope="recipeForm" data-index="{{index}}" data-field="temperature" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeStageInput" />
-                </label>
+                <view class="param-time-summary">
+                  <text>{{recipeForm.stages.length}} 个步骤</text>
+                  <text class="param-time-summary-strong">{{recipeForm.water || 0}}g · {{pourTemp.range(recipeForm.stages, recipeForm.temperature)}}</text>
+                </view>
               </view>
-              <view class="stage-time-line"><text class="stage-icon">{{index + 1}}.</text><text class="stage-range-text">{{item.rangeText}}</text><text class="line"></text><label class="stage-duration-edit"><input id="recipe-stage-duration-{{index}}" type="number" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{item.duration}}" data-scope="recipeForm" data-index="{{index}}" data-field="duration" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeStageInput" bindblur="onRecipeStageDurationBlur" /><text>秒</text></label><view class="stage-adjust-button" data-scope="recipeForm" data-index="{{index}}" data-delta="-1" bindtap="adjustRecipeStageDuration"><image class="stage-control-image" src="../../assets/icons/stage-minus.png" mode="aspectFit"></image></view><view class="stage-adjust-button" data-scope="recipeForm" data-index="{{index}}" data-delta="1" bindtap="adjustRecipeStageDuration"><image class="stage-control-image" src="../../assets/icons/stage-plus.png" mode="aspectFit"></image></view></view>
-              <input id="recipe-stage-name-{{index}}" class="stage-name-input" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" value="{{item.name}}" data-scope="recipeForm" data-index="{{index}}" data-field="name" cursor="{{item.nameCursor}}" bindfocus="onParameterInputFocus" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeStageInput" bindblur="onRecipeStageNameBlur" />
+              <view class="pour-bar">
+                <view wx:for="{{recipeForm.stages}}" wx:key="id" class="pour-bar-col" style="flex: {{item.duration}} 1 0;">
+                  <text class="pour-bar-water">{{item.cumulativeWater}}g</text>
+                  <view class="pour-bar-seg param-tone-{{index % 4}}"><text>{{index + 1}}</text></view>
+                  <view class="pour-bar-times">
+                    <text>{{item.startText}}</text>
+                    <text wx:if="{{index === recipeForm.stages.length - 1}}">{{item.endText}}</text>
+                  </view>
+                </view>
               </view>
             </view>
-            <view class="brew-action-row">
-              <button class="primary-button add-stage-button" data-scope="recipeForm" bindtap="addRecipeStage">添加步骤</button>
+            <view class="steps-editor param-stage-list">
+              <view wx:for="{{recipeForm.stages}}" wx:key="id" id="recipe-stage-editor-row-{{index}}" class="param-stage-swipe {{stageActionIndex === index ? 'actions-open' : ''}}" data-index="{{index}}" bindtouchstart="onStageTouchStart" bindtouchend="onStageTouchEnd">
+                <view class="param-stage-delete" data-scope="recipeForm" data-index="{{index}}" catchtap="deleteRecipeStageFromSwipe">删除</view>
+                <view class="param-stage-card">
+                  <view class="param-stage-index param-tone-{{index % 4}}">{{index + 1}}</view>
+                  <view class="param-stage-body">
+                    <textarea id="recipe-stage-name-{{index}}" class="param-stage-name" auto-height adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" bindkeyboardheightchange="onParameterKeyboardHeightChange" show-confirm-bar="{{false}}" maxlength="200" value="{{item.name}}" data-scope="recipeForm" data-index="{{index}}" data-field="name" cursor="{{item.nameCursor}}" bindfocus="onParameterInputFocus" bindinput="onRecipeStageInput" bindblur="onRecipeStageNameBlur" />
+                    <view class="param-stage-meta">
+                      <text class="param-stage-range">{{item.rangeText}}</text>
+                      <label class="param-stage-chip is-water"><text>至</text><input id="recipe-stage-water-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{item.cumulativeWater}}" data-scope="recipeForm" data-index="{{index}}" data-field="cumulativeWater" bindinput="onRecipeStageInput" /><text>g</text></label>
+                      <label class="param-stage-chip {{pourTemp.differs(item.temperature, recipeForm.temperature) ? 'is-temp-diff' : ''}}"><input id="recipe-stage-temperature-{{index}}" type="digit" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{item.temperature}}" data-scope="recipeForm" data-index="{{index}}" data-field="temperature" bindinput="onRecipeStageInput" /><text>°C</text></label>
+                      <view class="param-stage-duration">
+                        <view class="param-step-button is-small" hover-class="param-step-button-hover" hover-stay-time="80" data-scope="recipeForm" data-index="{{index}}" data-delta="-1" bindtap="adjustRecipeStageDuration">−</view>
+                        <label class="param-stage-seconds"><input id="recipe-stage-duration-{{index}}" type="number" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" value="{{item.duration}}" data-scope="recipeForm" data-index="{{index}}" data-field="duration" bindfocus="onParameterInputFocus" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeStageInput" bindblur="onRecipeStageDurationBlur" /><text>s</text></label>
+                        <view class="param-step-button is-small" hover-class="param-step-button-hover" hover-stay-time="80" data-scope="recipeForm" data-index="{{index}}" data-delta="1" bindtap="adjustRecipeStageDuration">+</view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </view>
             </view>
+            <view class="param-add-stage" hover-class="param-step-button-hover" hover-stay-time="80" data-scope="recipeForm" bindtap="addRecipeStage">+ 添加步骤</view>
+            <text wx:if="{{recipeForm.stages.length}}" class="param-stage-tip">左滑步骤可删除</text>
           </view>
           <view class="brew-action-row recipe-save-action">
             <button class="primary-button step-next-button recipe-save-button" bindtap="saveRecipe">{{editingRecipeId ? '保存修改' : '添加方案'}}</button>
