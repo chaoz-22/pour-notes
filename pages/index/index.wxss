@@ -11583,13 +11583,13 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   color: #993c1d;
 }
 
-/* Clearer edge where each stacked card sits on the one before it. */
+/* Soft edge where each stacked card sits on the one before it. */
 .bean-wallet-stack > .bean-swipe-row > .bean-card.wallet-card {
   border: 1rpx solid rgba(255, 255, 255, 0.9);
   border-top: 2rpx solid rgba(255, 255, 255, 0.95);
   box-shadow:
-    0 -12rpx 28rpx rgba(70, 50, 24, 0.16),
-    0 -1rpx 0 rgba(70, 50, 24, 0.08),
+    0 -6rpx 16rpx rgba(70, 50, 24, 0.06),
+    0 -1rpx 0 rgba(70, 50, 24, 0.05),
     inset 0 2rpx 0 rgba(255, 255, 255, 0.85);
 }
 
@@ -12083,4 +12083,59 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
 
 .taste-section .flavor-radar-wrap {
   height: 400rpx;
+}
+
+/* Log card subtitle: bean name (darker, the only part that shortens with "…") and
+   roaster (lighter). */
+.wallet-card-subline {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.wallet-card-sub-bean {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #3b332a;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.wallet-card-sub-roaster {
+  flex: 0 0 auto;
+  color: #8a7a64;
+  font-weight: 500;
+}
+
+.wallet-card-sub-bean + .wallet-card-sub-roaster::before {
+  margin-right: 12rpx;
+  color: #c4b8a4;
+  content: "·";
+}
+
+/* Date sits on the first line, right of the brew name. */
+.wallet-card-name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20rpx;
+  min-width: 0;
+}
+
+.wallet-card-name-row .wallet-card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wallet-card-date {
+  flex: 0 0 auto;
+  color: #6e5b43;
+  font-family: "SF Pro Rounded", -apple-system, "Helvetica Neue", sans-serif;
+  font-size: 24rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1rpx;
 }

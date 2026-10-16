@@ -4196,6 +4196,30 @@ Page({
     }, {}, () => this.refreshDerived());
   },
 
+  onLogStageInput(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const field = event.currentTarget.dataset.field;
+    const stages = (this.data.selectedLogEditForm.stages || []).map((stage) => ({ ...stage }));
+    if (!stages[index] || !field) return;
+    stages[index][field] = event.detail.value;
+    this.setData({
+      "selectedLogEditForm.stages": decorateStages(stages),
+      "selectedLogEditForm.stagesEdited": true
+    });
+  },
+
+  adjustLogStageDuration(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const delta = Number(event.currentTarget.dataset.delta) || 0;
+    const stages = (this.data.selectedLogEditForm.stages || []).map((stage) => ({ ...stage }));
+    if (!stages[index]) return;
+    stages[index].duration = Math.max(1, (Number(stages[index].duration) || 0) + delta);
+    this.setData({
+      "selectedLogEditForm.stages": decorateStages(stages),
+      "selectedLogEditForm.stagesEdited": true
+    });
+  },
+
   onLogEditInput(event) {
     const field = event.currentTarget.dataset.field;
     this.setData({ [`selectedLogEditForm.${field}`]: event.detail.value });
@@ -4242,7 +4266,16 @@ Page({
         extractionRate: form.extractionRate,
         rating: form.rating,
         tasting: normalizeFlavorScores(form.flavorScores, 0),
-        notes: form.notes
+        notes: form.notes,
+        ...(form.stagesEdited && Array.isArray(form.stages) && form.stages.length
+          ? (() => {
+            const stages = buildLogStages(form.stages, 0);
+            return {
+              stages,
+              totalTime: formatTime(stages.length ? stages[stages.length - 1].endTime : 0)
+            };
+          })()
+          : {})
       });
     });
     this.setData({
@@ -7376,10 +7409,12 @@ function decorateLogCard(log, bean = null) {
     artSeed: log.beanId || beanName || log.id,
     cardArtStyle: buildBeanCardArtStyle(log.beanId || beanName || log.id),
     cardTitleText: String(log.brewName || "").trim() || beanName || "未命名商品",
-    // A renamed brew may no longer carry its date, so the date always follows.
-    subtitleText: String(log.brewName || "").trim()
-      ? joinBeanCardParts([beanName, roaster, formatShortDisplayDate(log.createdAt)])
-      : joinBeanCardParts([roaster, formatShortDisplayDate(log.createdAt)]),
+    // Subtitle parts, styled apart on the card: bean name (only for named brews,
+    // shortens with "…"), roaster, and the date (always shown, since a renamed brew
+    // may no longer carry it).
+    subBean: String(log.brewName || "").trim() ? beanName : "",
+    subRoaster: roaster,
+    subDate: formatShortDisplayDate(log.createdAt),
     notesText: String(log.notes || "").trim()
   };
 }
@@ -7817,6 +7852,20 @@ function formatMonthDay(date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+// Pour steps as editable rows (name, duration, cumulative water, temperature), using
+// the same timing the detail page shows.
+function buildLogEditStages(log) {
+  return decorateStages(decorateLogWaterStages(log).map((stage, index) => ({
+    id: `log-edit-stage-${index}`,
+    name: stage.name || stage.instructionText || "",
+    duration: stage.spanSeconds || stage.duration || 1,
+    cumulativeWater: stage.water,
+    temperature: stage.temperature === "" || stage.temperature === null || stage.temperature === undefined
+      ? ""
+      : String(stage.temperature)
+  })));
+}
+
 function buildLogEditForm(log, bean = null) {
   if (!log) {
     return {
@@ -7848,6 +7897,8 @@ function buildLogEditForm(log, bean = null) {
   return {
     beanName: (bean && bean.name) || normalized.beanName || "",
     brewName: normalized.brewName || "",
+    stages: buildLogEditStages(normalized),
+    stagesEdited: false,
     country: (bean && bean.country) || normalized.country || "",
     origin: (bean && bean.origin) || normalized.origin || "",
     process: (bean && bean.process) || normalized.process || "",

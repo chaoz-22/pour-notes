@@ -89,8 +89,8 @@
                     <view class="card bean-card wallet-card {{logWalletOpenId === item.id ? 'is-open' : ''}}" style="{{item.cardArtStyle}}{{logSwipeMovingId === item.id ? logSwipeStyle : (activeLogActionId === item.id ? 'transform:translateX(-232rpx);' : '')}}">
                       <view class="wallet-card-head">
                         <view class="wallet-card-title">
-                          <text class="wallet-card-name">{{item.cardTitleText}}</text>
-                          <text class="wallet-card-roaster">{{item.subtitleText}}</text>
+                          <view class="wallet-card-name-row"><text class="wallet-card-name">{{item.cardTitleText}}</text><text wx:if="{{item.subDate}}" class="wallet-card-date">{{item.subDate}}</text></view>
+                          <view class="wallet-card-roaster wallet-card-subline"><text wx:if="{{item.subBean}}" class="wallet-card-sub-bean">{{item.subBean}}</text><text wx:if="{{item.subRoaster}}" class="wallet-card-sub-roaster">{{item.subRoaster}}</text></view>
                         </view>
                       </view>
                       <view wx:if="{{logWalletOpenId === item.id}}" class="wallet-card-face log-wallet-face">
@@ -914,7 +914,25 @@
                     </view>
                   </view>
                 </view>
-                <view wx:if="{{selectedLogDetail.waterStages.length > 0}}" class="pour-step-list">
+                <view wx:if="{{selectedLogEditMode && selectedLogEditForm.stages.length}}" class="pour-step-list log-edit-stage-list">
+                  <view wx:for="{{selectedLogEditForm.stages}}" wx:key="id" class="param-stage-card">
+                    <view class="param-stage-index param-tone-{{index % 4}}">{{index + 1}}</view>
+                    <view class="param-stage-body">
+                      <textarea class="param-stage-name" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" maxlength="200" value="{{item.name}}" data-index="{{index}}" data-field="name" bindinput="onLogStageInput" />
+                      <view class="param-stage-meta">
+                        <text class="param-stage-range">{{item.rangeText}}</text>
+                        <label class="param-stage-chip is-water"><text>至</text><input type="digit" adjust-position="{{true}}" cursor-spacing="24" value="{{item.cumulativeWater}}" data-index="{{index}}" data-field="cumulativeWater" bindinput="onLogStageInput" /><text>g</text></label>
+                        <label class="param-stage-chip {{pourTemp.differs(item.temperature, selectedLogEditForm.temperature) ? 'is-temp-diff' : ''}}"><input type="digit" adjust-position="{{true}}" cursor-spacing="24" value="{{item.temperature}}" data-index="{{index}}" data-field="temperature" bindinput="onLogStageInput" /><text>°C</text></label>
+                        <view class="param-stage-duration">
+                          <view class="param-step-button is-small" hover-class="param-step-button-hover" hover-stay-time="80" data-index="{{index}}" data-delta="-1" bindtap="adjustLogStageDuration">−</view>
+                          <label class="param-stage-seconds"><input type="number" adjust-position="{{true}}" cursor-spacing="24" value="{{item.duration}}" data-index="{{index}}" data-field="duration" bindinput="onLogStageInput" /><text>s</text></label>
+                          <view class="param-step-button is-small" hover-class="param-step-button-hover" hover-stay-time="80" data-index="{{index}}" data-delta="1" bindtap="adjustLogStageDuration">+</view>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+                <view wx:elif="{{selectedLogDetail.waterStages.length > 0}}" class="pour-step-list">
                   <view wx:for="{{selectedLogDetail.waterStages}}" wx:key="id" class="param-stage-card pour-step-card">
                     <view class="param-stage-index param-tone-{{index % 4}}">{{item.index}}</view>
                     <view class="param-stage-body">
@@ -1054,8 +1072,8 @@
                     <view class="card bean-card wallet-card {{logWalletOpenId === item.id ? 'is-open' : ''}}" style="{{item.cardArtStyle}}{{logSwipeMovingId === item.id ? logSwipeStyle : (activeLogActionId === item.id ? 'transform:translateX(-232rpx);' : '')}}" data-id="{{item.id}}" bindtap="tapLogWalletCard">
                       <view class="wallet-card-head">
                         <view class="wallet-card-title">
-                          <text class="wallet-card-name">{{item.cardTitleText}}</text>
-                          <text class="wallet-card-roaster">{{item.subtitleText}}</text>
+                          <view class="wallet-card-name-row"><text class="wallet-card-name">{{item.cardTitleText}}</text><text wx:if="{{item.subDate}}" class="wallet-card-date">{{item.subDate}}</text></view>
+                          <view class="wallet-card-roaster wallet-card-subline"><text wx:if="{{item.subBean}}" class="wallet-card-sub-bean">{{item.subBean}}</text><text wx:if="{{item.subRoaster}}" class="wallet-card-sub-roaster">{{item.subRoaster}}</text></view>
                         </view>
                       </view>
                       <view wx:if="{{logWalletOpenId === item.id}}" class="wallet-card-face log-wallet-face">
