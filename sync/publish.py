@@ -7,6 +7,7 @@ import json
 import re
 
 import cloudbase
+from detail_images import read_detail_images
 from extract import extract_bean, fetch_page_text, verify_bean
 from images import make_thumbnail
 
@@ -35,8 +36,15 @@ def _bean_id(roaster: dict, handle: str) -> str:
 
 
 def _page_text(item: dict) -> str:
-    """商品介绍文字：一般去抓商品页，个别网站抓不到时由抓取模块直接提供。"""
-    return item.get("page_text") or fetch_page_text(item["url"])
+    """商品介绍文字：一般去抓商品页，个别网站抓不到时由抓取模块直接提供。
+
+    介绍画在图片里的店（Aery），再接上从介绍图读出的文字。
+    """
+    text = item.get("page_text") or fetch_page_text(item["url"])
+    image_text = read_detail_images(item.get("detail_images", []), item["title"])
+    if image_text:
+        text += f"\n\n以下是商品介绍图里的文字：\n{image_text}"
+    return text
 
 
 def publish_new(roaster: dict, item: dict, own_beans: list[dict]) -> dict:
