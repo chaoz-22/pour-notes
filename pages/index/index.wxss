@@ -10696,26 +10696,9 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   flex: 0 0 auto;
 }
 
-/* Card wallet pages scroll with the page itself (no nested scroller, which can
-   leave iOS touch scrolling stuck on the next page). The page header is sticky,
-   and the switch / filter bar sticks right under it. */
-.wallet-page-active .bean-catalog-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: #ffffff;
-}
-
-.wallet-page-active .wallet-sticky-sub {
-  position: sticky;
-  top: var(--wallet-sticky-top, 0px);
-  z-index: 25;
-  box-shadow: 0 0 0 14rpx #ffffff;
-}
-
-.wallet-page-active .brew-log-calendar-filter.wallet-sticky-sub {
-  background: #ffffff;
-}
+/* Card wallet pages scroll with the page itself; the shared page scroller keeps
+   its original settings (no extra enhanced / sticky modes), since changing how it
+   behaves has frozen touch scrolling on iOS devices. */
 
 /* Brew detail (view mode): a hero card in the bean's colours, four key numbers,
    a short equipment list, and the rarer fields behind a "更多参数" toggle. */
@@ -10903,152 +10886,6 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   transform: scale(0.94);
 }
 
-/* Brew prep: the chosen bean shows as its wallet card, with dripper and recipe side by side. */
-.prepare-choice-list.prepare-wallet {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.prepare-bean-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 26rpx 28rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.72);
-  border-radius: 32rpx;
-  box-shadow: 0 10rpx 26rpx rgba(80, 58, 28, 0.08);
-}
-
-.prepare-bean-card.is-empty {
-  border: 2rpx dashed rgba(199, 150, 51, 0.45);
-  background: #fffdf8;
-  box-shadow: none;
-}
-
-.prepare-bean-copy {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 6rpx;
-  min-width: 0;
-}
-
-.prepare-bean-name {
-  overflow: hidden;
-  color: #1f1a14;
-  font-size: 34rpx;
-  font-weight: 800;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.prepare-bean-sub {
-  overflow: hidden;
-  color: #4b4135;
-  font-size: 24rpx;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.prepare-bean-card .stock-ring.prepare-bean-ring {
-  display: grid;
-  flex: 0 0 88rpx;
-  width: 88rpx;
-  height: 88rpx;
-  margin: 0;
-  place-items: center;
-  border-radius: 50%;
-  box-shadow: 0 4rpx 14rpx rgba(80, 58, 28, 0.12);
-  color: #241b10;
-  font-size: 22rpx;
-  font-weight: 800;
-}
-
-.prepare-bean-plus {
-  display: grid;
-  flex: 0 0 72rpx;
-  width: 72rpx;
-  height: 72rpx;
-  place-items: center;
-  border-radius: 50%;
-  background: #c79633;
-  color: #ffffff;
-  font-size: 44rpx;
-  line-height: 1;
-}
-
-.prepare-tile-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
-}
-
-.prepare-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-  min-width: 0;
-  padding: 20rpx 22rpx;
-  border: 1rpx solid rgba(199, 150, 51, 0.18);
-  border-radius: 24rpx;
-  background: #ffffff;
-}
-
-.prepare-tile.is-selected {
-  border-color: rgba(199, 150, 51, 0.55);
-  background: #fffaf0;
-}
-
-.prepare-tile-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.prepare-tile-label {
-  color: #8a7a64;
-  font-size: 22rpx;
-  font-weight: 650;
-}
-
-.prepare-tile-value {
-  overflow: hidden;
-  color: #241b10;
-  font-size: 28rpx;
-  font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.prepare-tile.is-empty .prepare-tile-value {
-  color: #b88222;
-}
-
-.prepare-tile-clear {
-  display: grid;
-  width: 36rpx;
-  height: 36rpx;
-  place-items: center;
-  border-radius: 50%;
-  background: #eadcbf;
-  color: #6e5b43;
-  font-size: 24rpx;
-  line-height: 1;
-}
-
-.prepare-tile-hover {
-  opacity: 0.78;
-}
-
 /* Small fixes: unrated records, empty-state action, nickname placeholder. */
 .log-wallet-unrated {
   color: #a39782;
@@ -11089,67 +10926,6 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
 .beans-view.has-fixed-add-action,
 .recipe-view.has-fixed-add-action {
   padding-bottom: 180rpx;
-}
-
-/* Once a dripper is chosen its icon sits beside the name, as in the old row. */
-.prepare-tile.prepare-dripper-tile {
-  flex-direction: row;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.prepare-tile.prepare-dripper-tile.is-selected {
-  border-color: rgba(199, 150, 51, 0.18);
-  background: #ffffff;
-}
-
-.prepare-dripper-icon {
-  display: grid;
-  flex: 0 0 76rpx;
-  width: 76rpx;
-  height: 76rpx;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 50%;
-  background: #f7f0e2;
-}
-
-.prepare-dripper-icon .dripper-icon {
-  width: 76rpx;
-  height: 76rpx;
-}
-
-.prepare-tile-copy {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 6rpx;
-  min-width: 0;
-}
-
-/* Long bean / dripper / recipe names end in "…" instead of widening the prep area. */
-.prepare-choice-list.prepare-wallet,
-.prepare-bean-card,
-.prepare-tile-row,
-.prepare-tile {
-  box-sizing: border-box;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.prepare-choice-list.prepare-wallet {
-  width: 100%;
-}
-
-.prepare-bean-name,
-.prepare-bean-sub,
-.prepare-tile-value,
-.prepare-tile-label {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Parameter page: core numbers as big tiles, grind as one card with recent
@@ -11822,45 +11598,31 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
   min-width: 0;
 }
 
-.recipe-form-notes {
-  padding: 20rpx 26rpx;
-}
-
-.recipe-form-notes-input {
-  width: 100%;
-  min-height: 120rpx;
-  color: #241b10;
-  font-size: 27rpx;
-  font-weight: 600;
-  line-height: 1.55;
-}
 
 .recipe-form textarea.param-stage-name,
-.recipe-form textarea.recipe-form-notes-input {
+.recipe-form textarea.bean-form-flavor-input {
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
+/* The recipe notes field matches the bean flavour field exactly: one line tall,
+   left-aligned, vertically centred, and growing downward as text is added. */
+.recipe-form textarea.bean-form-flavor-input {
+  width: 100%;
+  min-height: 0;
+  color: #1f1a14;
+  font-size: 27rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+}
+
 .recipe-form textarea.param-stage-name {
   min-height: 0;
   font-size: 27rpx;
   font-weight: 650;
-}
-
-/* Brew prep: more air between the bean card, the dripper / recipe tiles and the
-   parameter panel. */
-.prepare-choice-list.prepare-wallet {
-  gap: 28rpx;
-}
-
-.prepare-tile-row {
-  gap: 24rpx;
-}
-
-.fixed-brew-screen .parameter-orb {
-  margin-top: 96rpx;
 }
 
 /* Add / edit bean: grouped cards like the brew and recipe editors. */
@@ -11909,4 +11671,416 @@ button.mine-menu-row.mine-menu-contact-row.mine-menu-row-hover {
 .mine-record-summary {
   width: 100%;
   text-align: center;
+}
+
+/* Card actions live on a link at the card's foot; tapping elsewhere on the card
+   only opens or collapses it. */
+.wallet-card-tap-hint {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.wallet-card-link {
+  display: inline-block;
+  margin: -12rpx -12rpx -12rpx 0;
+  padding: 12rpx;
+  border-radius: 999rpx;
+  color: #b88222;
+  font-size: 24rpx;
+  font-weight: 750;
+}
+
+.wallet-card-link-hover {
+  background: rgba(199, 150, 51, 0.14);
+}
+
+/* 在库 / 空袋 and 自建 / 预设: a light segmented control — the selected side is a
+   raised white chip instead of a heavy black block — with counts beside each label. */
+.mode-switch.bean-stock-switch,
+.mode-switch.recipe-library-switch {
+  gap: 6rpx;
+  padding: 6rpx;
+  border: 0;
+  border-radius: 24rpx;
+  background: #f3ece0;
+}
+
+.mode-switch.bean-stock-switch .mode-switch-option,
+.mode-switch.recipe-library-switch .mode-switch-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  min-height: 70rpx;
+  border: 1rpx solid transparent;
+  border-radius: 20rpx;
+  background: transparent;
+  color: #8a7a64;
+  font-size: 26rpx;
+  font-weight: 650;
+}
+
+.mode-switch.bean-stock-switch .mode-switch-option.active,
+.mode-switch.recipe-library-switch .mode-switch-option.active {
+  border-color: #e6dac4;
+  background: #ffffff;
+  color: #241b10;
+  font-weight: 800;
+  box-shadow: 0 4rpx 12rpx rgba(80, 58, 28, 0.1);
+}
+
+.mode-switch.bean-stock-switch .mode-switch-option-hover,
+.mode-switch.recipe-library-switch .mode-switch-option-hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mode-switch-count {
+  color: #a39782;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.mode-switch-option.active .mode-switch-count {
+  color: #b88222;
+}
+
+/* Brew prep rows: long bean / dripper / recipe names end in "…" instead of
+   wrapping or widening the row. */
+.prepare-choice-list,
+.prepare-choice-row,
+.prepare-choice-row .choice-copy {
+  min-width: 0;
+}
+
+.prepare-choice-row .choice-title,
+.prepare-choice-row .choice-subtitle,
+.prepare-choice-row .recipe-quick-selected-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Brew prep: a little more space between the three rows, and the rows plus the
+   parameter panel sit a bit lower on the page. */
+.fixed-brew-screen .prepare-choice-list {
+  gap: 30rpx;
+  margin-top: 28rpx;
+}
+
+/* The whole foot row of an open card is the tap target (not just the small link). */
+.wallet-card-action-row {
+  margin: 0 -16rpx -16rpx;
+  padding: 18rpx 16rpx 16rpx;
+  border-radius: 0 0 24rpx 24rpx;
+}
+
+.wallet-card-foot.wallet-card-action-row {
+  margin-top: 0;
+}
+
+.wallet-card-tap-hint.wallet-card-action-row {
+  margin-top: -18rpx;
+}
+
+.wallet-card-foot-hover {
+  background: rgba(199, 150, 51, 0.12);
+}
+
+.wallet-card-action-row .wallet-card-link {
+  margin: 0;
+  padding: 0;
+}
+
+/* Bean filter: simple header, a selected count per group, options on an even
+   grid, folding for long groups, and a "查看 N 款豆子" footer. */
+.roaster-bean-filter-panel.bean-filter-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  padding: 26rpx 24rpx 24rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+}
+
+.bean-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bean-filter-title {
+  color: #241b10;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.bean-filter-clear {
+  color: #b88222;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.bean-filter-clear.is-disabled {
+  color: #cfc4b2;
+}
+
+.bean-filter-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.bean-filter-group-title {
+  color: #6e5b43;
+  font-size: 25rpx;
+  font-weight: 750;
+}
+
+.bean-filter-group-state {
+  color: #a39782;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.bean-filter-group-state.is-active {
+  color: #b88222;
+}
+
+.bean-filter-grid {
+  display: grid;
+  gap: 12rpx;
+}
+
+.bean-filter-grid.cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bean-filter-grid.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bean-filter-option {
+  overflow: hidden;
+  padding: 16rpx 6rpx;
+  border-radius: 18rpx;
+  background: #f7f0e2;
+  color: #4b4135;
+  font-size: 23rpx;
+  font-weight: 650;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bean-filter-option.is-wide {
+  grid-column: span 2;
+}
+
+.bean-filter-option.is-active {
+  background: #241b10;
+  color: #fffdf8;
+}
+
+.bean-filter-option-hover {
+  opacity: 0.75;
+}
+
+.bean-filter-more {
+  margin-top: 14rpx;
+  color: #b88222;
+  font-size: 22rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bean-filter-empty {
+  color: #a39782;
+  font-size: 22rpx;
+}
+
+.bean-filter-done {
+  padding: 22rpx 0;
+  border-radius: 999rpx;
+  background: #c79633;
+  color: #ffffff;
+  font-size: 27rpx;
+  font-weight: 800;
+  text-align: center;
+}
+
+.bean-filter-done-hover {
+  opacity: 0.85;
+}
+
+.roaster-bean-filter-trigger.is-active {
+  background: #241b10;
+  color: #fffdf8;
+}
+
+/* Roaster bean list: one horizontal card per bean — thumbnail, name, "产地 · 品种 ·
+   处理法" and two flavour tags — so beans can be compared before opening them. */
+.roaster-bean-grid.roaster-bean-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.roaster-bean-list .roaster-bean-option {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 16rpx;
+  border: 1rpx solid rgba(199, 150, 51, 0.18);
+  border-radius: 26rpx;
+  background: #ffffff;
+}
+
+.roaster-bean-list .roaster-bean-image-wrap {
+  flex: 0 0 132rpx;
+  width: 132rpx;
+  height: 132rpx;
+  padding-bottom: 0;
+  border-radius: 18rpx;
+  box-shadow: none;
+}
+
+.roaster-bean-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.roaster-bean-list .roaster-bean-name {
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: 28rpx;
+  font-weight: 800;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roaster-bean-meta {
+  display: block;
+  color: #8a7a64;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* All flavour notes as one quiet line in the card's own palette, wrapping when long. */
+.roaster-bean-flavor {
+  display: block;
+  color: #9a7a4c;
+  font-size: 22rpx;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+/* Long bean names wrap inside the card instead of widening the list off screen. */
+.beans-view.roaster-bean-view {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.roaster-bean-grid.roaster-bean-list,
+.roaster-bean-list .roaster-bean-option {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.roaster-bean-list .roaster-bean-name {
+  overflow: visible;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Add / edit bean and recipe editor: a compact flavour / notes field with its text
+   left-aligned and vertically centred in the box, and darker text overall so the
+   forms are easier to read. */
+.bean-form-flavor-card {
+  display: flex;
+  align-items: center;
+  min-height: 92rpx;
+  padding: 18rpx 26rpx;
+}
+
+.bean-form-flavor-input {
+  width: 100%;
+  min-height: 0;
+  color: #1f1a14;
+  font-size: 27rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.bean-form-grouped .param-group-title,
+.recipe-form-grouped .param-group-title {
+  color: #5b4f40;
+}
+
+.bean-form-grouped .param-card-row > text:first-child,
+.bean-form-grouped .param-core-label,
+.recipe-form-grouped .param-card-row > text:first-child,
+.recipe-form-grouped .param-core-label {
+  color: #3b332a;
+}
+
+.bean-form-grouped .param-card-row input,
+.bean-form-grouped .param-core-input,
+.bean-form-grouped .bean-form-roast-value,
+.recipe-form-grouped .param-card-row input,
+.recipe-form-grouped .param-core-input {
+  color: #1f1a14;
+}
+
+.bean-form-placeholder,
+.bean-form-grouped .bean-form-roast-value.is-empty {
+  color: #9a8c78;
+  font-weight: 500;
+}
+
+/* Result step: brew name on top. Spacing stays as before; only the notes box and
+   the radar area are a little shorter so the step still fits on one screen. */
+.taste-section .result-name-field {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 0 18rpx;
+  padding: 20rpx 6rpx 16rpx;
+  border-bottom: 1rpx solid rgba(197, 151, 62, 0.2);
+}
+
+.taste-section .result-name-label {
+  flex: 0 0 auto;
+  color: #554b3e;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.taste-section .result-name-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 60rpx;
+  color: #1f1a14;
+  font-size: 29rpx;
+  font-weight: 800;
+  text-align: right;
+}
+
+.taste-section .result-review-field textarea {
+  height: 120rpx;
+}
+
+.taste-section .flavor-radar-wrap {
+  height: 400rpx;
 }

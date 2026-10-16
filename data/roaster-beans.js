@@ -24,7 +24,17 @@ const ROASTER_BEAN_THUMBNAIL_STYLES = {
   "peoplepossession-industrial-supply-series-pink": "transform: translateY(-20rpx);",
   "peoplepossession-inmaculada-fellow-farms-geisha-natural": "transform: translateY(-20rpx);",
   "peoplepossession-finca-voo-red-catuai-48h-natural": "transform: translate(5rpx, -4rpx);",
-  "peoplepossession-wwe-wild-watermelon-experience": "transform: translate(3rpx, -7rpx);"
+  "peoplepossession-wwe-wild-watermelon-experience": "transform: translate(3rpx, -7rpx);",
+  // Apollon's Gold: these product photos are cropped tighter than the others, so
+  // their labels look bigger; scale them to match Chelchele / Kianyangi / Pie San.
+  "apollons-gold-cgle-geisha-1": "transform: scale(0.86);",
+  "apollons-gold-chelchele-natural": "transform: scale(0.86);",
+  "apollons-gold-motreal-duberney-cifuentes-geisha": "transform: scale(0.86);",
+  "apollons-gold-kotowa-eth47": "transform: scale(0.86);",
+  "apollons-gold-kotowa": "transform: scale(0.86);",
+  "apollons-gold-la-isla-1": "transform: scale(0.86);",
+  "apollons-gold-las-margaritas-cgle17": "transform: scale(0.86);",
+  "apollons-gold-shantawene": "transform: scale(0.86);"
 };
 
 const COFFEE_COLLECTIVE_OFFICIAL_BREW_RECIPE = {

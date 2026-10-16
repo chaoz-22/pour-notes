@@ -4,7 +4,7 @@
 
 <view
   class="edge-back-stage"
-  style="--wallet-sticky-top:{{walletStickyTop}}px;--status-bar-height:{{statusBarHeight}}px;--navigation-bar-height:{{navigationBarHeight}}px;"
+  style="--status-bar-height:{{statusBarHeight}}px;--navigation-bar-height:{{navigationBarHeight}}px;"
   capture-bind:touchstart="onPageEdgeTouchStart"
   capture-bind:touchmove="onPageEdgeTouchMove"
   capture-bind:touchend="onPageEdgeTouchEnd"
@@ -49,7 +49,7 @@
             </view>
 
             <view class="brew-home-record-bar log-wallet">
-              <view class="brew-log-calendar-filter wallet-sticky-sub">
+              <view class="brew-log-calendar-filter">
                 <view class="brew-log-calendar-toolbar">
                   <view class="brew-log-calendar-trigger">
                     <text>{{logDateFilter ? logDateFilterText : '全部记录'}}</text>
@@ -89,7 +89,7 @@
                     <view class="card bean-card wallet-card {{logWalletOpenId === item.id ? 'is-open' : ''}}" style="{{item.cardArtStyle}}{{logSwipeMovingId === item.id ? logSwipeStyle : (activeLogActionId === item.id ? 'transform:translateX(-232rpx);' : '')}}">
                       <view class="wallet-card-head">
                         <view class="wallet-card-title">
-                          <text class="wallet-card-name">{{item.productNameText}}</text>
+                          <text class="wallet-card-name">{{item.cardTitleText}}</text>
                           <text class="wallet-card-roaster">{{item.subtitleText}}</text>
                         </view>
                       </view>
@@ -109,7 +109,7 @@
                             </view>
                           </view>
                           <text wx:else class="log-wallet-unrated">未评分</text>
-                          <text>查看详情 ›</text>
+                          <text class="wallet-card-link">查看详情 ›</text>
                         </view>
                       </view>
                     </view>
@@ -178,9 +178,9 @@
             </view>
           </view>
           <view class="beans-view active bean-wallet {{beanStockMode === 'active' ? 'has-fixed-add-action' : ''}}">
-            <view class="mode-switch bean-stock-switch wallet-sticky-sub">
-              <view class="mode-switch-option {{beanStockMode === 'active' ? 'active' : ''}}">在库</view>
-              <view class="mode-switch-option {{beanStockMode === 'empty' ? 'active' : ''}}">空袋</view>
+            <view class="mode-switch bean-stock-switch">
+              <view class="mode-switch-option {{beanStockMode === 'active' ? 'active' : ''}}"><text>在库</text><text class="mode-switch-count">{{beanActiveCount}}</text></view>
+              <view class="mode-switch-option {{beanStockMode === 'empty' ? 'active' : ''}}"><text>空袋</text><text class="mode-switch-count">{{beanEmptyCount}}</text></view>
             </view>
             <view wx:if="{{displayBeanCards.length === 0}}" class="empty-state">{{beanStockEmptyText}}</view>
             <view class="bean-wallet-stack">
@@ -256,46 +256,40 @@
                   <view class="roaster-bean-filter-trigger-arrow {{roasterBeanSearchFilterOpen ? 'is-open' : ''}}"></view>
                 </view>
               </view>
-              <view wx:if="{{roasterBeanSearchFilterOpen}}" class="brew-log-calendar-panel roaster-bean-filter-panel">
-                <view class="roaster-bean-filter-panel-header">
-                  <view class="roaster-bean-filter-heading">
-                    <view class="roaster-bean-filter-heading-icon" aria-hidden="true"><view></view></view>
-                    <view class="roaster-bean-filter-heading-copy">
-                      <text class="roaster-bean-filter-heading-title">筛选豆子</text>
-                      <text class="roaster-bean-filter-heading-caption">{{roasterBeanActiveFilterCount > 0 ? '已选 ' + roasterBeanActiveFilterCount + ' 项' : '可多选条件'}}</text>
-                    </view>
-                  </view>
-                  <view class="roaster-bean-filter-panel-actions">
-                    <view class="roaster-bean-filter-clear-all {{roasterBeanActiveFilterCount === 0 ? 'is-disabled' : ''}}">清除</view>
-                    <view class="roaster-bean-filter-done">完成</view>
-                  </view>
+              <view wx:if="{{roasterBeanSearchFilterOpen}}" class="brew-log-calendar-panel roaster-bean-filter-panel bean-filter-v2">
+                <view class="bean-filter-head">
+                  <text class="bean-filter-title">筛选</text>
+                  <text class="bean-filter-clear {{roasterBeanActiveFilterCount === 0 ? 'is-disabled' : ''}}">清除全部</text>
                 </view>
-                <view wx:for="{{roasterBeanFilterGroups}}" wx:for-item="filterGroup" wx:key="key" class="roaster-bean-filter-group">
-                  <view class="roaster-bean-filter-group-heading">
-                    <text class="roaster-bean-filter-group-title">{{filterGroup.label}}</text>
-                    <view class="roaster-bean-filter-group-line"></view>
+                <view wx:for="{{roasterBeanFilterGroups}}" wx:for-item="filterGroup" wx:key="key" class="bean-filter-group">
+                  <view class="bean-filter-group-head">
+                    <text class="bean-filter-group-title">{{filterGroup.label}}</text>
+                    <text class="bean-filter-group-state {{filterGroup.selectedCount ? 'is-active' : ''}}">{{filterGroup.selectedCount ? '已选 ' + filterGroup.selectedCount : '不限'}}</text>
                   </view>
-                  <view class="roaster-bean-filter-options">
-                    <view wx:for="{{filterGroup.options}}" wx:for-item="filterOption" wx:key="value" class="roaster-bean-filter-option {{filterOption.isSelected ? 'is-active' : ''}}">
-                      <text wx:if="{{filterOption.isSelected}}" class="roaster-bean-filter-option-check">✓</text>
-                      <text>{{filterOption.value}}</text>
-                    </view>
-                    <text wx:if="{{filterGroup.options.length === 0}}" class="roaster-bean-filter-empty">暂无选项</text>
+                  <view class="bean-filter-grid cols-{{filterGroup.columns}}">
+                    <view wx:for="{{filterGroup.visibleOptions}}" wx:for-item="filterOption" wx:key="value" class="bean-filter-option {{filterOption.isSelected ? 'is-active' : ''}} {{filterOption.isWide ? 'is-wide' : ''}}" data-field="{{filterGroup.key}}" data-value="{{filterOption.value}}">{{filterOption.value}}</view>
                   </view>
+                  <view wx:if="{{filterGroup.canFold}}" class="bean-filter-more" data-key="{{filterGroup.key}}">{{filterGroup.isExpanded ? '收起 ⌃' : '展开全部 ' + filterGroup.totalCount + ' 项 ⌄'}}</view>
+                  <text wx:if="{{filterGroup.options.length === 0}}" class="bean-filter-empty">暂无选项</text>
                 </view>
+                <view class="bean-filter-done">查看 {{displayRoasterBeans.length}} 款豆子</view>
               </view>
             </view>
             <view wx:if="{{displayRoasterBeans.length === 0}}" class="empty-state">
               <text wx:if="{{roasterBeanSearchQuery || roasterBeanActiveFilterCount > 0}}">没有找到符合条件的豆子。</text>
               <text wx:else>这个烘焙商还没有豆子。</text>
             </view>
-            <view wx:else class="roaster-bean-grid">
+            <view wx:else class="roaster-bean-grid roaster-bean-list">
               <view wx:for="{{displayRoasterBeans}}" wx:key="id" class="roaster-bean-option">
                 <view class="roaster-bean-image-wrap">
                   <image wx:if="{{item.image}}" class="roaster-bean-image" src="{{item.image}}" mode="aspectFit" lazy-load="{{true}}" style="{{item.thumbnailStyle || ''}}" />
                   <view wx:else class="roaster-bean-image-placeholder"><view class="roaster-bean-image-loading"></view></view>
                 </view>
-                <text class="roaster-bean-name">{{item.name}}</text>
+                <view class="roaster-bean-copy">
+                  <text class="roaster-bean-name">{{item.name}}</text>
+                  <text wx:if="{{item.listMetaText}}" class="roaster-bean-meta">{{item.listMetaText}}</text>
+                  <text wx:if="{{item.flavorLine}}" class="roaster-bean-flavor">{{item.flavorLine}}</text>
+                </view>
               </view>
             </view>
           </view>
@@ -323,12 +317,12 @@
             </view>
           </view>
           <view class="recipe-view active bean-wallet {{recipeLibraryMode === 'custom' && !recipeQuickImportMode ? 'has-fixed-add-action' : ''}}">
-            <view class="mode-switch recipe-library-switch wallet-sticky-sub">
-              <view class="mode-switch-option {{recipeLibraryMode === 'custom' ? 'active' : ''}}">自建方案</view>
-              <view class="mode-switch-option {{recipeLibraryMode === 'preset' ? 'active' : ''}}">预设方案</view>
+            <view class="mode-switch recipe-library-switch">
+              <view class="mode-switch-option {{recipeLibraryMode === 'custom' ? 'active' : ''}}"><text>自建方案</text><text class="mode-switch-count">{{customRecipeCount}}</text></view>
+              <view class="mode-switch-option {{recipeLibraryMode === 'preset' ? 'active' : ''}}"><text>预设方案</text><text class="mode-switch-count">{{presetRecipeCount}}</text></view>
             </view>
             <view wx:if="{{recipeQuickImportMode}}" class="recipe-quick-import-tip">
-              <text>点开方案查看曲线，再点一次即可导入</text><text>导入后仍可继续修改参数</text>
+              <text>点开方案，点「导入这个方案」即可导入</text><text>导入后仍可继续修改参数</text>
             </view>
             <view wx:if="{{displayRecipes.length === 0}}" class="empty-state">{{recipeLibraryEmptyText}}</view>
             <view class="bean-wallet-stack">
@@ -369,7 +363,7 @@
                     </view>
                     <view class="wallet-card-foot">
                       <text>{{item.isPreset ? '预设方案' : '自建方案'}}</text>
-                      <text>{{recipeQuickImportMode ? '点按导入 ›' : '查看详情 ›'}}</text>
+                      <text class="wallet-card-link">{{recipeQuickImportMode ? '导入这个方案 ›' : '查看详情 ›'}}</text>
                     </view>
                   </view>
                 </view>
@@ -394,53 +388,57 @@
           </view>
 
           <view class="section-block prepare-overview">
-            <view class="prepare-choice-list prepare-wallet">
-              <view wx:if="{{selectedBeanCard}}" class="prepare-bean-card" style="{{selectedBeanCard.cardArtStyle}}">
-                <view class="prepare-bean-copy">
-                  <text class="prepare-tile-label">咖啡豆 · 点击更换</text>
-                  <text class="prepare-bean-name">{{selectedBeanCard.primaryName}}</text>
-                  <text class="prepare-bean-sub">{{selectedBeanCard.roasterText}}{{selectedBeanCard.restingText ? ' · ' + selectedBeanCard.restingText : ''}}</text>
+            <view class="prepare-choice-list">
+              <view class="prepare-choice-row">
+                <view wx:if="{{selectedBeanCard}}" class="choice-stock-ring" style="{{selectedBeanCard.stockRingStyle}}">{{selectedBeanCard.remainingWeight}}g</view>
+                <view wx:else class="choice-plus">
+                  <image class="choice-plus-image" src="../../assets/icons/choice-plus.png" mode="aspectFit"></image>
                 </view>
-                <view class="stock-ring wallet-card-ring prepare-bean-ring" style="{{selectedBeanCard.stockRingStyle}}">{{selectedBeanCard.remainingWeight}}g</view>
+                <view class="choice-copy">
+                  <text class="choice-title">{{selectedBeanCard ? selectedBeanCard.nameAndVariety : '选择咖啡豆'}}</text>
+                  <text class="choice-subtitle">{{selectedBeanCard ? selectedBeanCard.roasterText : '从豆仓选择一包豆子'}}</text>
+                </view>
+                <text class="choice-chevron">›</text>
               </view>
-              <view wx:else class="prepare-bean-card is-empty">
-                <view class="prepare-bean-copy">
-                  <text class="prepare-bean-name">选择咖啡豆</text>
-                  <text class="prepare-bean-sub">从豆仓选择一包豆子</text>
+
+              <view class="prepare-choice-row">
+                <view wx:if="{{selectedDripper}}" class="choice-icon-circle choice-dripper-icon">
+                  <view class="dripper-icon dripper-icon-{{selectedDripperDisplay.iconType}} {{selectedDripperDisplay.image ? 'dripper-icon-image' : ''}}">
+                    <image wx:if="{{selectedDripperDisplay.image}}" class="dripper-image" src="{{selectedDripperDisplay.image}}" mode="aspectFit" lazy-load="{{true}}" style="width: {{selectedDripperDisplay.imageDisplaySize}}rpx; height: {{selectedDripperDisplay.imageDisplaySize}}rpx;"></image>
+                    <text wx:elif="{{selectedDripperDisplay.initial}}" class="dripper-initial">{{selectedDripperDisplay.initial}}</text>
+                    <view wx:else class="dripper-sketch">
+                      <view class="sketch-top"></view>
+                      <view class="sketch-body"></view>
+                      <view class="sketch-base"></view>
+                      <view class="sketch-detail detail-a"></view>
+                      <view class="sketch-detail detail-b"></view>
+                      <view class="sketch-detail detail-c"></view>
+                      <view class="sketch-detail detail-d"></view>
+                      <view class="sketch-detail detail-e"></view>
+                      <view class="sketch-detail detail-handle"></view>
+                    </view>
+                  </view>
                 </view>
-                <view class="prepare-bean-plus">+</view>
+                <view wx:else class="choice-plus">
+                  <image class="choice-plus-image" src="../../assets/icons/choice-plus.png" mode="aspectFit"></image>
+                </view>
+                <view class="choice-copy">
+                  <text class="choice-title">{{selectedDripper ? (selectedDripperDisplay.displayName || selectedDripper) : '选择滤杯'}}</text>
+                  <text class="choice-subtitle">{{selectedDripper ? '已选择滤杯' : '请选择一个滤杯'}}</text>
+                </view>
+                <text class="choice-chevron">›</text>
               </view>
-              <view class="prepare-tile-row">
-                <view class="prepare-tile prepare-dripper-tile {{selectedDripper ? 'is-selected' : 'is-empty'}}">
-                  <view wx:if="{{selectedDripper}}" class="choice-dripper-icon prepare-dripper-icon">
-                      <view class="dripper-icon dripper-icon-{{selectedDripperDisplay.iconType}} {{selectedDripperDisplay.image ? 'dripper-icon-image' : ''}}">
-                        <image wx:if="{{selectedDripperDisplay.image}}" class="dripper-image" src="{{selectedDripperDisplay.image}}" mode="aspectFit" lazy-load="{{true}}" style="width: {{selectedDripperDisplay.imageDisplaySize}}rpx; height: {{selectedDripperDisplay.imageDisplaySize}}rpx;"></image>
-                        <text wx:elif="{{selectedDripperDisplay.initial}}" class="dripper-initial">{{selectedDripperDisplay.initial}}</text>
-                        <view wx:else class="dripper-sketch">
-                          <view class="sketch-top"></view>
-                          <view class="sketch-body"></view>
-                          <view class="sketch-base"></view>
-                          <view class="sketch-detail detail-a"></view>
-                          <view class="sketch-detail detail-b"></view>
-                          <view class="sketch-detail detail-c"></view>
-                          <view class="sketch-detail detail-d"></view>
-                          <view class="sketch-detail detail-e"></view>
-                          <view class="sketch-detail detail-handle"></view>
-                        </view>
-                      </view>
-                  </view>
-                  <view class="prepare-tile-copy">
-                    <text class="prepare-tile-label">滤杯</text>
-                    <text class="prepare-tile-value">{{selectedDripper ? (selectedDripperDisplay.displayName || selectedDripper) : '去选择 ›'}}</text>
-                  </view>
+
+              <view class="prepare-choice-row recipe-quick-import-control {{brewRecipeSourceId ? 'is-selected' : ''}}">
+                <view wx:if="{{!brewRecipeSourceId}}" class="choice-icon-circle recipe-quick-import-book-icon">
+                  <image class="recipe-quick-import-book-logo" src="../../assets/icons/home-book.png" mode="aspectFit"></image>
                 </view>
-                <view class="prepare-tile {{brewRecipeSourceId ? 'is-selected' : 'is-empty'}}">
-                  <view class="prepare-tile-head">
-                    <text class="prepare-tile-label">方案（可选）</text>
-                    <text wx:if="{{brewRecipeSourceId}}" class="prepare-tile-clear">×</text>
-                  </view>
-                  <text class="prepare-tile-value">{{brewRecipeSourceId ? brewRecipeSourceName : '快速导入 ›'}}</text>
+                <view wx:if="{{!brewRecipeSourceId}}" class="choice-copy">
+                  <text class="choice-title">方案快速导入（可选）</text>
                 </view>
+                <text wx:if="{{brewRecipeSourceId}}" class="recipe-quick-selected-name">{{brewRecipeSourceName}}</text>
+                <text wx:if="{{brewRecipeSourceId}}" class="recipe-quick-import-clear-circle">×</text>
+                <text wx:else class="choice-chevron">›</text>
               </view>
             </view>
 
@@ -626,7 +624,7 @@
                 <view class="mine-menu-copy"><text>清理数据</text></view><text class="mine-menu-chevron">›</text>
               </view>
             </view>
-            <text class="mine-version">Pour Notes · v2.2.2</text>
+            <text class="mine-version">Pour Notes · v2.3.0</text>
           </view>
         </view>
       </scroll-view>
@@ -708,7 +706,7 @@
     </view>
   </view>
 
-<view class="app-shell {{edgeBackActive ? 'edge-back-current' : ''}} {{activeTab === 'brew' && brewStep === 3 ? 'timer-active' : ''}} {{lockBrewScreen ? 'fixed-brew-screen' : ''}} {{activeTab === 'brew' && brewHomeVisible ? 'brew-home-active' : ''}} {{activeTab === 'brew' && brewHomeVisible && homeView === 'dashboard' ? 'home-dashboard-active' : ''}} {{activeTab === 'mine' ? 'mine-page-active' : ''}} {{activeTab === 'mine' && mineView === 'buyingGuide' ? 'mine-guide-active' : ''}} {{selectedLogDetail ? 'brew-detail-active' : ''}} {{flavorActiveFlavor ? 'flavor-detail-active' : ''}} {{walletPageActive ? 'wallet-page-active' : ''}}" style="--wallet-sticky-top:{{walletStickyTop}}px;--status-bar-height:{{statusBarHeight}}px;--navigation-bar-height:{{navigationBarHeight}}px;--menu-safe-right:{{menuSafeRight}}px;{{edgeBackPageStyle}}">
+<view class="app-shell {{edgeBackActive ? 'edge-back-current' : ''}} {{activeTab === 'brew' && brewStep === 3 ? 'timer-active' : ''}} {{lockBrewScreen ? 'fixed-brew-screen' : ''}} {{activeTab === 'brew' && brewHomeVisible ? 'brew-home-active' : ''}} {{activeTab === 'brew' && brewHomeVisible && homeView === 'dashboard' ? 'home-dashboard-active' : ''}} {{activeTab === 'mine' ? 'mine-page-active' : ''}} {{activeTab === 'mine' && mineView === 'buyingGuide' ? 'mine-guide-active' : ''}} {{selectedLogDetail ? 'brew-detail-active' : ''}} {{flavorActiveFlavor ? 'flavor-detail-active' : ''}} {{walletPageActive ? 'wallet-page-active' : ''}}" style="--status-bar-height:{{statusBarHeight}}px;--navigation-bar-height:{{navigationBarHeight}}px;--menu-safe-right:{{menuSafeRight}}px;{{edgeBackPageStyle}}">
   <view class="tabs">
     <view wx:for="{{tabs}}" wx:key="key" class="tab {{activeTab === item.key || (item.key === 'brew' && (activeTab === 'stats' || activeTab === 'recipes' || activeTab === 'flavor')) ? 'active' : ''}}" data-tab="{{item.key}}" bindtap="switchTab">
       <image wx:if="{{item.key === 'brew'}}" class="tab-logo" src="../../assets/icons/home-logo.png" mode="aspectFit"></image>
@@ -730,7 +728,7 @@
   <template is="flavor-detail-layer" data="{{activeFlavor: flavorActiveFlavor}}"></template>
   <template is="flavor-add-page" data="{{addOpen: flavorAddOpen, addForm: flavorAddForm, addGroups: flavorAddGroups, addStyle: flavorAddStyle, addCanSave: flavorAddCanSave, categories: flavorCategories}}"></template>
 
-  <scroll-view id="page-content" enable-passive="{{!(secondaryPageActive || showDataManager || showPrivacyAgreement)}}" enhanced="{{secondaryPageActive || walletPageActive || showDataManager || showPrivacyAgreement}}" bounces="{{!(secondaryPageActive || showDataManager || showPrivacyAgreement)}}" using-sticky="{{secondaryPageActive || walletPageActive || showDataManager || showPrivacyAgreement}}" refresher-enabled="{{false}}" scroll-anchoring="{{false}}" scroll-with-animation="{{false}}" scroll-y="{{!edgeBackActive && (contentScrollY || secondaryPageActive || showDataManager || showPrivacyAgreement)}}" scroll-top="{{contentScrollTop}}" scroll-into-view="{{contentScrollIntoView}}" lower-threshold="240" bindscroll="handleContentScroll" bindscrolltolower="loadMoreBrewLogs" class="content">
+  <scroll-view id="page-content" enable-passive="{{!(secondaryPageActive || showDataManager || showPrivacyAgreement)}}" enhanced="{{secondaryPageActive || showDataManager || showPrivacyAgreement}}" bounces="{{!(secondaryPageActive || showDataManager || showPrivacyAgreement)}}" using-sticky="{{secondaryPageActive || showDataManager || showPrivacyAgreement}}" refresher-enabled="{{false}}" scroll-anchoring="{{false}}" scroll-with-animation="{{false}}" scroll-y="{{!edgeBackActive && (contentScrollY || secondaryPageActive || showDataManager || showPrivacyAgreement)}}" scroll-top="{{contentScrollTop}}" scroll-into-view="{{contentScrollIntoView}}" lower-threshold="240" bindscroll="handleContentScroll" bindscrolltolower="loadMoreBrewLogs" class="content">
     <view wx:if="{{activeTab === 'brew'}}" class="panel">
       <view wx:if="{{brewHomeVisible}}" class="brew-home">
         <block wx:if="{{homeView === 'dashboard'}}">
@@ -808,7 +806,7 @@
               <view class="brew-detail-top-grid">
                 <block wx:if="{{!selectedLogEditMode}}">
                   <view class="log-detail-hero" style="{{selectedLogDetail.detailHeroArtStyle}}">
-                    <text class="log-detail-hero-title">{{selectedLogDetail.productNameText}}</text>
+                    <text class="log-detail-hero-title">{{selectedLogDetail.detailTitleText}}</text>
                     <text wx:if="{{selectedLogDetail.detailHeroSubtitle}}" class="log-detail-hero-sub">{{selectedLogDetail.detailHeroSubtitle}}</text>
                     <view class="log-detail-hero-foot">
                       <view wx:if="{{selectedLogDetail.rating > 0}}" class="brew-record-rating-stars">
@@ -855,7 +853,8 @@
                       </view>
                     </view>
                     <view wx:else class="brew-detail-info-grid">
-                      <view class="brew-detail-info-row"><text>商品名称</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.beanName}}" data-field="beanName" bindinput="onLogEditInput" /></view>
+                      <view class="brew-detail-info-row"><text>冲煮名称</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.brewName}}" data-field="brewName" bindinput="onLogEditInput" /></view>
+                    <view class="brew-detail-info-row"><text>商品名称</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.beanName}}" data-field="beanName" bindinput="onLogEditInput" /></view>
                       <view class="brew-detail-info-row"><text>国家</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.country}}" data-field="country" bindinput="onLogEditInput" /></view>
                       <view class="brew-detail-info-row"><text>庄园 / 处理站</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.origin}}" data-field="origin" bindinput="onLogEditInput" /></view>
                       <view class="brew-detail-info-row"><text>处理法</text><input class="brew-detail-edit-input" adjust-position="{{true}}" cursor-spacing="24" value="{{selectedLogEditForm.process}}" data-field="process" bindinput="onLogEditInput" /></view>
@@ -1015,7 +1014,7 @@
             </view>
 
             <view class="brew-home-record-bar log-wallet">
-              <view class="brew-log-calendar-filter wallet-sticky-sub">
+              <view class="brew-log-calendar-filter">
                 <view class="brew-log-calendar-toolbar">
                   <view class="brew-log-calendar-trigger" bindtap="toggleLogCalendar">
                     <text>{{logDateFilter ? logDateFilterText : '全部记录'}}</text>
@@ -1055,7 +1054,7 @@
                     <view class="card bean-card wallet-card {{logWalletOpenId === item.id ? 'is-open' : ''}}" style="{{item.cardArtStyle}}{{logSwipeMovingId === item.id ? logSwipeStyle : (activeLogActionId === item.id ? 'transform:translateX(-232rpx);' : '')}}" data-id="{{item.id}}" bindtap="tapLogWalletCard">
                       <view class="wallet-card-head">
                         <view class="wallet-card-title">
-                          <text class="wallet-card-name">{{item.productNameText}}</text>
+                          <text class="wallet-card-name">{{item.cardTitleText}}</text>
                           <text class="wallet-card-roaster">{{item.subtitleText}}</text>
                         </view>
                       </view>
@@ -1067,7 +1066,7 @@
                           </view>
                         </view>
                         <text wx:if="{{item.notesText}}" class="wallet-card-line log-wallet-notes">{{item.notesText}}</text>
-                        <view class="wallet-card-foot log-wallet-foot">
+                        <view class="wallet-card-foot log-wallet-foot wallet-card-action-row" hover-class="wallet-card-foot-hover" hover-stay-time="100" data-id="{{item.id}}" catchtap="openBrewLogDetail">
                           <view wx:if="{{item.rating > 0}}" class="brew-record-rating-stars">
                             <view wx:for="{{ratingOptions}}" wx:for-item="score" wx:for-index="scoreIndex" wx:key="*this" class="brew-record-rating-star {{item.ratingStarWidths[scoreIndex] > 0 && item.ratingStarWidths[scoreIndex] < 100 ? 'is-partial' : ''}}">
                               <text class="brew-record-rating-star-base">★</text>
@@ -1075,7 +1074,7 @@
                             </view>
                           </view>
                           <text wx:else class="log-wallet-unrated">未评分</text>
-                          <text>查看详情 ›</text>
+                          <view class="wallet-card-link">查看详情 ›</view>
                         </view>
                       </view>
                     </view>
@@ -1142,54 +1141,59 @@
       </view>
 
       <view wx:if="{{brewStep === 1 && !overviewBeanPickerOpen}}" class="section-block prepare-overview">
-        <view class="prepare-choice-list prepare-wallet">
-          <view wx:if="{{selectedBeanCard}}" class="prepare-bean-card" style="{{selectedBeanCard.cardArtStyle}}" hover-class="prepare-tile-hover" hover-stay-time="120" bindtap="openBeanPickerPage">
-            <view class="prepare-bean-copy">
-              <text class="prepare-tile-label">咖啡豆 · 点击更换</text>
-              <text class="prepare-bean-name">{{selectedBeanCard.primaryName}}</text>
-              <text class="prepare-bean-sub">{{selectedBeanCard.roasterText}}{{selectedBeanCard.restingText ? ' · ' + selectedBeanCard.restingText : ''}}</text>
+        <view class="prepare-choice-list">
+          <view class="prepare-choice-row" bindtap="openBeanPickerPage">
+            <view wx:if="{{selectedBeanCard}}" class="choice-stock-ring" style="{{selectedBeanCard.stockRingStyle}}">{{selectedBeanCard.remainingWeight}}g</view>
+            <view wx:else class="choice-plus">
+              <image class="choice-plus-image" src="../../assets/icons/choice-plus.png" mode="aspectFit"></image>
             </view>
-            <view class="stock-ring wallet-card-ring prepare-bean-ring" style="{{selectedBeanCard.stockRingStyle}}">{{selectedBeanCard.remainingWeight}}g</view>
-          </view>
-          <view wx:else class="prepare-bean-card is-empty" hover-class="prepare-tile-hover" hover-stay-time="120" bindtap="openBeanPickerPage">
-            <view class="prepare-bean-copy">
-              <text class="prepare-bean-name">选择咖啡豆</text>
-              <text class="prepare-bean-sub">从豆仓选择一包豆子</text>
+            <view class="choice-copy">
+              <text class="choice-title">{{selectedBeanCard ? selectedBeanCard.nameAndVariety : '选择咖啡豆'}}</text>
+              <text class="choice-subtitle">{{selectedBeanCard ? selectedBeanCard.roasterText : '从豆仓选择一包豆子'}}</text>
             </view>
-            <view class="prepare-bean-plus">+</view>
+            <text class="choice-chevron">›</text>
           </view>
-          <view class="prepare-tile-row">
-            <view class="prepare-tile prepare-dripper-tile {{selectedDripper ? 'is-selected' : 'is-empty'}}" hover-class="prepare-tile-hover" hover-stay-time="120" bindtap="returnToDripperSelection">
-              <view wx:if="{{selectedDripper}}" class="choice-dripper-icon prepare-dripper-icon">
-                  <view class="dripper-icon dripper-icon-{{selectedDripperDisplay.iconType}} {{selectedDripperDisplay.image ? 'dripper-icon-image' : ''}}">
-                    <image wx:if="{{selectedDripperDisplay.image}}" class="dripper-image" src="{{selectedDripperDisplay.image}}" mode="aspectFit" lazy-load="{{true}}" style="width: {{selectedDripperDisplay.imageDisplaySize}}rpx; height: {{selectedDripperDisplay.imageDisplaySize}}rpx;" data-id="{{selectedDripperDisplay.imageCacheKey}}" data-source="{{selectedDripperDisplay.imageCloudSource}}" bindload="handleRoasterGuideImageLoad"></image>
-                    <text wx:elif="{{selectedDripperDisplay.initial}}" class="dripper-initial">{{selectedDripperDisplay.initial}}</text>
-                    <view wx:else class="dripper-sketch">
-                      <view class="sketch-top"></view>
-                      <view class="sketch-body"></view>
-                      <view class="sketch-base"></view>
-                      <view class="sketch-detail detail-a"></view>
-                      <view class="sketch-detail detail-b"></view>
-                      <view class="sketch-detail detail-c"></view>
-                      <view class="sketch-detail detail-d"></view>
-                      <view class="sketch-detail detail-e"></view>
-                      <view class="sketch-detail detail-handle"></view>
-                    </view>
-                  </view>
-              </view>
-              <view class="prepare-tile-copy">
-                <text class="prepare-tile-label">滤杯</text>
-                <text class="prepare-tile-value">{{selectedDripper ? (selectedDripperDisplay.displayName || selectedDripper) : '去选择 ›'}}</text>
+
+          <view class="prepare-choice-row" bindtap="returnToDripperSelection">
+            <view wx:if="{{selectedDripper}}" class="choice-icon-circle choice-dripper-icon">
+              <view class="dripper-icon dripper-icon-{{selectedDripperDisplay.iconType}} {{selectedDripperDisplay.image ? 'dripper-icon-image' : ''}}">
+                <image wx:if="{{selectedDripperDisplay.image}}" class="dripper-image" src="{{selectedDripperDisplay.image}}" mode="aspectFit" lazy-load="{{true}}" style="width: {{selectedDripperDisplay.imageDisplaySize}}rpx; height: {{selectedDripperDisplay.imageDisplaySize}}rpx;" data-id="{{selectedDripperDisplay.imageCacheKey}}" data-source="{{selectedDripperDisplay.imageCloudSource}}" bindload="handleRoasterGuideImageLoad"></image>
+                <text wx:elif="{{selectedDripperDisplay.initial}}" class="dripper-initial">{{selectedDripperDisplay.initial}}</text>
+                <view wx:else class="dripper-sketch">
+                  <view class="sketch-top"></view>
+                  <view class="sketch-body"></view>
+                  <view class="sketch-base"></view>
+                  <view class="sketch-detail detail-a"></view>
+                  <view class="sketch-detail detail-b"></view>
+                  <view class="sketch-detail detail-c"></view>
+                  <view class="sketch-detail detail-d"></view>
+                  <view class="sketch-detail detail-e"></view>
+                  <view class="sketch-detail detail-handle"></view>
+                </view>
               </view>
             </view>
-            <view class="prepare-tile {{brewRecipeSourceId ? 'is-selected' : 'is-empty'}}" hover-class="prepare-tile-hover" hover-stay-time="120" bindtap="openRecipeQuickImport">
-              <view class="prepare-tile-head">
-                <text class="prepare-tile-label">方案（可选）</text>
-                <text wx:if="{{brewRecipeSourceId}}" class="prepare-tile-clear" catchtap="clearRecipeQuickImport">×</text>
-              </view>
-              <text class="prepare-tile-value">{{brewRecipeSourceId ? brewRecipeSourceName : '快速导入 ›'}}</text>
+            <view wx:else class="choice-plus">
+              <image class="choice-plus-image" src="../../assets/icons/choice-plus.png" mode="aspectFit"></image>
             </view>
+            <view class="choice-copy">
+              <text class="choice-title">{{selectedDripper ? (selectedDripperDisplay.displayName || selectedDripper) : '选择滤杯'}}</text>
+              <text class="choice-subtitle">{{selectedDripper ? '已选择滤杯' : '请选择一个滤杯'}}</text>
+            </view>
+            <text class="choice-chevron">›</text>
           </view>
+
+          <view class="prepare-choice-row recipe-quick-import-control {{brewRecipeSourceId ? 'is-selected' : ''}}" hover-class="recipe-quick-import-hover" hover-stay-time="120" bindtap="openRecipeQuickImport">
+            <view wx:if="{{!brewRecipeSourceId}}" class="choice-icon-circle recipe-quick-import-book-icon">
+              <image class="recipe-quick-import-book-logo" src="../../assets/icons/home-book.png" mode="aspectFit"></image>
+            </view>
+            <view wx:if="{{!brewRecipeSourceId}}" class="choice-copy">
+              <text class="choice-title">方案快速导入（可选）</text>
+            </view>
+            <text wx:if="{{brewRecipeSourceId}}" class="recipe-quick-selected-name">{{brewRecipeSourceName}}</text>
+            <text wx:if="{{brewRecipeSourceId}}" class="recipe-quick-import-clear-circle" catchtap="clearRecipeQuickImport">×</text>
+            <text wx:else class="choice-chevron">›</text>
+          </view>
+
         </view>
 
         <view class="parameter-orb" hover-class="parameter-orb-hover" hover-stay-time="120" bindtap="openParameterAdjust">
@@ -1242,7 +1246,7 @@
                     <text>{{item.roastDateText}}</text>
                     <text>{{item.restingText}}</text>
                   </view>
-                  <view class="wallet-card-tap-hint">{{selectedBeanId === item.id ? '当前使用中 · 点按继续 ›' : '点按使用这包豆子 ›'}}</view>
+                  <view class="wallet-card-tap-hint wallet-card-action-row" hover-class="wallet-card-foot-hover" hover-stay-time="100" data-id="{{item.id}}" catchtap="selectBeanForBrew"><view class="wallet-card-link">{{selectedBeanId === item.id ? '继续使用这包豆子 ›' : '使用这包豆子 ›'}}</view></view>
                 </view>
               </view>
             </view>
@@ -1408,6 +1412,10 @@
 
       <view wx:if="{{brewStep === 4}}" class="section-block taste-section">
         <view class="result-evaluation-card">
+          <label class="result-name-field">
+            <text class="result-name-label">冲煮名称</text>
+            <input class="result-name-input" adjust-position="{{true}}" cursor-spacing="24" maxlength="30" placeholder="给这次冲煮起个名字" placeholder-class="bean-form-placeholder" value="{{brewForm.brewName}}" data-field="brewName" bindinput="onBrewInput" />
+          </label>
           <view class="result-metrics">
             <label class="result-metric-field">
               <text class="result-metric-label">浓度比 TDS</text>
@@ -1489,9 +1497,9 @@
       </view>
 
       <view wx:if="{{beansView === 'list'}}" class="beans-view active bean-wallet {{beanStockMode === 'active' ? 'has-fixed-add-action' : ''}}">
-        <view class="mode-switch bean-stock-switch wallet-sticky-sub">
-          <view class="mode-switch-option {{beanStockMode === 'active' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="active" bindtap="setBeanStockMode">在库</view>
-          <view class="mode-switch-option {{beanStockMode === 'empty' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="empty" bindtap="setBeanStockMode">空袋</view>
+        <view class="mode-switch bean-stock-switch">
+          <view class="mode-switch-option {{beanStockMode === 'active' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="active" bindtap="setBeanStockMode"><text>在库</text><text class="mode-switch-count">{{beanActiveCount}}</text></view>
+          <view class="mode-switch-option {{beanStockMode === 'empty' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="empty" bindtap="setBeanStockMode"><text>空袋</text><text class="mode-switch-count">{{beanEmptyCount}}</text></view>
         </view>
         <view wx:if="{{displayBeanCards.length === 0}}" class="empty-state">{{beanStockEmptyText}}</view>
         <view class="bean-wallet-stack">
@@ -1519,7 +1527,7 @@
                   <text>{{item.roastDateText}}</text>
                   <text>{{item.restingText}}{{item.initialWeight ? ' · 共 ' + item.initialWeight + 'g' : ''}}</text>
                 </view>
-                <view wx:if="{{!item.isEmpty}}" class="wallet-card-tap-hint">点按开始冲煮 ›</view>
+                <view wx:if="{{!item.isEmpty}}" class="wallet-card-tap-hint wallet-card-action-row" hover-class="wallet-card-foot-hover" hover-stay-time="100" data-id="{{item.id}}" catchtap="openBrewFlow"><view class="wallet-card-link">开始冲煮 ›</view></view>
               </view>
             </view>
           </view>
@@ -1539,32 +1547,32 @@
           </view>
           <text class="param-group-title">基本信息</text>
           <view class="param-card">
-            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
           </view>
           <text class="param-group-title">产地与处理</text>
           <view class="param-card">
-            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
             <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
               <view class="param-card-row bean-form-roast-row"><text>烘焙度</text><text class="bean-form-roast-value {{beanForm.roastLevel ? '' : 'is-empty'}}">{{beanForm.roastLevel || '选择'}}<text class="param-picker-arrow">⌄</text></text></view>
             </picker>
           </view>
           <text class="param-group-title">风味描述</text>
-          <view class="param-card recipe-form-notes">
-            <textarea class="recipe-form-notes-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" />
+          <view class="param-card bean-form-flavor-card">
+            <textarea class="bean-form-flavor-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" />
           </view>
           <text class="param-group-title">库存</text>
           <view class="param-core-grid">
             <view class="param-core-tile">
               <text class="param-core-label">重量</text>
-              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
             </view>
             <view class="param-core-tile">
               <text class="param-core-label">烘焙日期</text>
-              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
             </view>
           </view>
           <button class="primary-button bean-form-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
@@ -1605,32 +1613,32 @@
         <view class="parameter-list param-grouped bean-form-grouped">
           <text class="param-group-title">基本信息</text>
           <view class="param-card">
-            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>商品名称</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：AGA" value="{{beanForm.name}}" data-field="name" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>烘焙商</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：Coffee Collective" value="{{beanForm.roaster}}" data-field="roaster" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
           </view>
           <text class="param-group-title">产地与处理</text>
           <view class="param-card">
-            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" bindinput="onBeanFormInput" /></label>
-            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>国家</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：埃塞俄比亚" value="{{beanForm.country}}" data-field="country" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>产地 / 庄园</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：西达摩" value="{{beanForm.origin}}" data-field="origin" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>品种</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：74158" value="{{beanForm.variety}}" data-field="variety" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
+            <label class="param-card-row"><text>处理法</text><input adjust-position="{{true}}" cursor-spacing="24" placeholder="例：水洗" value="{{beanForm.process}}" data-field="process" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
             <picker mode="selector" range="{{roastLevels}}" bindchange="onBeanRoastChange">
               <view class="param-card-row bean-form-roast-row"><text>烘焙度</text><text class="bean-form-roast-value {{beanForm.roastLevel ? '' : 'is-empty'}}">{{beanForm.roastLevel || '选择'}}<text class="param-picker-arrow">⌄</text></text></view>
             </picker>
           </view>
           <text class="param-group-title">风味描述</text>
-          <view class="param-card recipe-form-notes">
-            <textarea class="recipe-form-notes-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" bindinput="onBeanFormInput" />
+          <view class="param-card bean-form-flavor-card">
+            <textarea class="bean-form-flavor-input" auto-height adjust-position="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="例：柑橘、茉莉、蜂蜜" value="{{beanForm.flavorDescription}}" data-field="flavorDescription" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" />
           </view>
           <text class="param-group-title">库存</text>
           <view class="param-core-grid">
             <view class="param-core-tile">
               <text class="param-core-label">重量</text>
-              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input" type="digit" adjust-position="{{true}}" cursor-spacing="24" placeholder="250" value="{{beanForm.initialWeight}}" data-field="initialWeight" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /><text class="param-unit">g</text></label>
             </view>
             <view class="param-core-tile">
               <text class="param-core-label">烘焙日期</text>
-              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" bindinput="onBeanFormInput" /></label>
+              <label class="param-core-value bean-form-core-value"><input class="param-core-input bean-form-date-input" adjust-position="{{true}}" cursor-spacing="24" placeholder="2026.7.10" value="{{beanForm.roastDate}}" data-field="roastDate" placeholder-class="bean-form-placeholder" bindinput="onBeanFormInput" /></label>
             </view>
           </view>
           <button class="primary-button bean-form-save-button" bindtap="saveBean">{{editingBeanId ? '保存修改' : '加入豆仓'}}</button>
@@ -1649,48 +1657,40 @@
               <view class="roaster-bean-filter-trigger-arrow {{roasterBeanSearchFilterOpen ? 'is-open' : ''}}"></view>
             </view>
           </view>
-          <view wx:if="{{roasterBeanSearchFilterOpen}}" class="brew-log-calendar-panel roaster-bean-filter-panel">
-            <view class="roaster-bean-filter-panel-header">
-              <view class="roaster-bean-filter-heading">
-                <view class="roaster-bean-filter-heading-icon" aria-hidden="true">
-                  <view></view>
-                </view>
-                <view class="roaster-bean-filter-heading-copy">
-                  <text class="roaster-bean-filter-heading-title">筛选豆子</text>
-                  <text class="roaster-bean-filter-heading-caption">{{roasterBeanActiveFilterCount > 0 ? '已选 ' + roasterBeanActiveFilterCount + ' 项' : '可多选条件'}}</text>
-                </view>
-              </view>
-              <view class="roaster-bean-filter-panel-actions">
-                <view class="roaster-bean-filter-clear-all {{roasterBeanActiveFilterCount === 0 ? 'is-disabled' : ''}}" hover-class="{{roasterBeanActiveFilterCount > 0 ? 'roaster-bean-filter-action-hover' : ''}}" hover-stay-time="120" catchtap="clearRoasterBeanFilters">清除</view>
-                <view class="roaster-bean-filter-done" hover-class="roaster-bean-filter-done-hover" hover-stay-time="120" catchtap="closeRoasterBeanSearchFilter">完成</view>
-              </view>
+          <view wx:if="{{roasterBeanSearchFilterOpen}}" class="brew-log-calendar-panel roaster-bean-filter-panel bean-filter-v2">
+            <view class="bean-filter-head">
+              <text class="bean-filter-title">筛选</text>
+              <text class="bean-filter-clear {{roasterBeanActiveFilterCount === 0 ? 'is-disabled' : ''}}" catchtap="clearRoasterBeanFilters">清除全部</text>
             </view>
-            <view wx:for="{{roasterBeanFilterGroups}}" wx:for-item="filterGroup" wx:key="key" class="roaster-bean-filter-group">
-              <view class="roaster-bean-filter-group-heading">
-                <text class="roaster-bean-filter-group-title">{{filterGroup.label}}</text>
-                <view class="roaster-bean-filter-group-line"></view>
+            <view wx:for="{{roasterBeanFilterGroups}}" wx:for-item="filterGroup" wx:key="key" class="bean-filter-group">
+              <view class="bean-filter-group-head">
+                <text class="bean-filter-group-title">{{filterGroup.label}}</text>
+                <text class="bean-filter-group-state {{filterGroup.selectedCount ? 'is-active' : ''}}">{{filterGroup.selectedCount ? '已选 ' + filterGroup.selectedCount : '不限'}}</text>
               </view>
-              <view class="roaster-bean-filter-options">
-                <view wx:for="{{filterGroup.options}}" wx:for-item="filterOption" wx:key="value" class="roaster-bean-filter-option {{filterOption.isSelected ? 'is-active' : ''}}" hover-class="roaster-bean-filter-option-hover" hover-stay-time="120" data-field="{{filterGroup.key}}" data-value="{{filterOption.value}}" catchtap="toggleRoasterBeanFilterOption">
-                  <text wx:if="{{filterOption.isSelected}}" class="roaster-bean-filter-option-check">✓</text>
-                  <text>{{filterOption.value}}</text>
-                </view>
-                <text wx:if="{{filterGroup.options.length === 0}}" class="roaster-bean-filter-empty">暂无选项</text>
+              <view class="bean-filter-grid cols-{{filterGroup.columns}}">
+                <view wx:for="{{filterGroup.visibleOptions}}" wx:for-item="filterOption" wx:key="value" class="bean-filter-option {{filterOption.isSelected ? 'is-active' : ''}} {{filterOption.isWide ? 'is-wide' : ''}}" hover-class="bean-filter-option-hover" hover-stay-time="100" data-field="{{filterGroup.key}}" data-value="{{filterOption.value}}" catchtap="toggleRoasterBeanFilterOption">{{filterOption.value}}</view>
               </view>
+              <view wx:if="{{filterGroup.canFold}}" class="bean-filter-more" data-key="{{filterGroup.key}}" catchtap="toggleRoasterFilterGroup">{{filterGroup.isExpanded ? '收起 ⌃' : '展开全部 ' + filterGroup.totalCount + ' 项 ⌄'}}</view>
+              <text wx:if="{{filterGroup.options.length === 0}}" class="bean-filter-empty">暂无选项</text>
             </view>
+            <view class="bean-filter-done" hover-class="bean-filter-done-hover" hover-stay-time="100" catchtap="closeRoasterBeanSearchFilter">查看 {{displayRoasterBeans.length}} 款豆子</view>
           </view>
         </view>
         <view wx:if="{{displayRoasterBeans.length === 0}}" class="empty-state">
           <text wx:if="{{roasterBeanSearchQuery || roasterBeanActiveFilterCount > 0}}">没有找到符合条件的豆子。</text>
           <text wx:else>这个烘焙商还没有豆子。</text>
         </view>
-        <view wx:else class="roaster-bean-grid">
+        <view wx:else class="roaster-bean-grid roaster-bean-list">
           <view wx:for="{{displayRoasterBeans}}" wx:key="id" class="roaster-bean-option" data-id="{{item.id}}" bindtap="openRoasterBeanDetail">
             <view class="roaster-bean-image-wrap">
               <image wx:if="{{item.image}}" class="roaster-bean-image" src="{{item.image}}" mode="aspectFit" lazy-load="{{true}}" style="{{item.thumbnailStyle || ''}}" data-id="{{item.id}}" data-source="{{item.cloudImage}}" bindload="handleRoasterGuideImageLoad" />
               <view wx:else class="roaster-bean-image-placeholder"><view class="roaster-bean-image-loading"></view></view>
             </view>
-            <text class="roaster-bean-name">{{item.name}}</text>
+            <view class="roaster-bean-copy">
+              <text class="roaster-bean-name">{{item.name}}</text>
+              <text wx:if="{{item.listMetaText}}" class="roaster-bean-meta">{{item.listMetaText}}</text>
+              <text wx:if="{{item.flavorLine}}" class="roaster-bean-flavor">{{item.flavorLine}}</text>
+            </view>
           </view>
         </view>
       </view>
@@ -1712,12 +1712,12 @@
       </view>
 
       <view wx:if="{{recipesView === 'list'}}" class="recipe-view active bean-wallet {{recipeLibraryMode === 'custom' && !recipeQuickImportMode ? 'has-fixed-add-action' : ''}}">
-          <view class="mode-switch recipe-library-switch wallet-sticky-sub">
-            <view class="mode-switch-option {{recipeLibraryMode === 'custom' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="custom" bindtap="setRecipeLibraryMode">自建方案</view>
-            <view class="mode-switch-option {{recipeLibraryMode === 'preset' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="preset" bindtap="setRecipeLibraryMode">预设方案</view>
+          <view class="mode-switch recipe-library-switch">
+            <view class="mode-switch-option {{recipeLibraryMode === 'custom' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="custom" bindtap="setRecipeLibraryMode"><text>自建方案</text><text class="mode-switch-count">{{customRecipeCount}}</text></view>
+            <view class="mode-switch-option {{recipeLibraryMode === 'preset' ? 'active' : ''}}" hover-class="mode-switch-option-hover" hover-stay-time="120" data-mode="preset" bindtap="setRecipeLibraryMode"><text>预设方案</text><text class="mode-switch-count">{{presetRecipeCount}}</text></view>
           </view>
           <view wx:if="{{recipeQuickImportMode}}" class="recipe-quick-import-tip">
-            <text>点开方案查看曲线，再点一次即可导入</text>
+            <text>点开方案，点「导入这个方案」即可导入</text>
             <text>导入后仍可继续修改参数</text>
           </view>
           <view wx:if="{{displayRecipes.length === 0}}" class="empty-state">{{recipeLibraryEmptyText}}</view>
@@ -1760,9 +1760,9 @@
                     <view><text>时间</text><text>{{item.totalTimeText}}</text></view>
                     <view><text>粉量</text><text>{{item.dose}}g</text></view>
                   </view>
-                  <view class="wallet-card-foot">
+                  <view class="wallet-card-foot wallet-card-action-row" hover-class="wallet-card-foot-hover" hover-stay-time="100" data-id="{{item.id}}" catchtap="openRecipeDetail">
                     <text>{{item.isPreset ? '预设方案' : '自建方案'}}</text>
-                    <text>{{recipeQuickImportMode ? '点按导入 ›' : '查看详情 ›'}}</text>
+                    <view class="wallet-card-link">{{recipeQuickImportMode ? '导入这个方案 ›' : '查看详情 ›'}}</view>
                   </view>
                 </view>
               </view>
@@ -1847,7 +1847,7 @@
         <view class="recipe-form">
           <view class="parameter-list param-grouped recipe-form-grouped">
             <view class="param-card">
-              <label class="param-card-row"><text>方案名称</text><input id="recipe-name" placeholder="例：甜感 V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.name}}" data-field="name" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>方案名称</text><input id="recipe-name" placeholder-class="bean-form-placeholder" placeholder="例：甜感 V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.name}}" data-field="name" bindinput="onRecipeFormInput" /></label>
             </view>
             <text class="param-group-title">核心参数</text>
             <view class="param-core-grid">
@@ -1855,7 +1855,7 @@
                 <text class="param-core-label">咖啡粉</text>
                 <view class="param-stepper">
                   <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="dose" data-delta="-0.5" bindtap="stepRecipeParam">−</view>
-                  <label class="param-core-value"><input id="recipe-dose" class="param-core-input" type="digit" placeholder="15" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dose}}" data-scope="recipeForm" bindinput="onRecipeDoseInput" /><text class="param-unit">g</text></label>
+                  <label class="param-core-value"><input id="recipe-dose" placeholder-class="bean-form-placeholder" class="param-core-input" type="digit" placeholder="15" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dose}}" data-scope="recipeForm" bindinput="onRecipeDoseInput" /><text class="param-unit">g</text></label>
                   <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="dose" data-delta="0.5" bindtap="stepRecipeParam">+</view>
                 </view>
               </view>
@@ -1863,7 +1863,7 @@
                 <text class="param-core-label">水温</text>
                 <view class="param-stepper">
                   <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="temperature" data-delta="-1" bindtap="stepRecipeParam">−</view>
-                  <label class="param-core-value"><input id="recipe-temperature" class="param-core-input" type="digit" placeholder="92" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.temperature}}" data-field="temperature" bindinput="onRecipeFormInput" /><text class="param-unit">°C</text></label>
+                  <label class="param-core-value"><input id="recipe-temperature" placeholder-class="bean-form-placeholder" class="param-core-input" type="digit" placeholder="92" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.temperature}}" data-field="temperature" bindinput="onRecipeFormInput" /><text class="param-unit">°C</text></label>
                   <view class="param-step-button" hover-class="param-step-button-hover" hover-stay-time="80" data-field="temperature" data-delta="1" bindtap="stepRecipeParam">+</view>
                 </view>
               </view>
@@ -1875,14 +1875,14 @@
               </picker>
               <view class="param-core-tile">
                 <text class="param-core-label">注水量 · 按粉水比自动算</text>
-                <label class="param-core-value"><input id="recipe-water" class="param-core-input" type="digit" placeholder="225" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.water}}" data-scope="recipeForm" bindinput="onRecipeWaterInput" /><text class="param-unit">g</text></label>
+                <label class="param-core-value"><input id="recipe-water" placeholder-class="bean-form-placeholder" class="param-core-input" type="digit" placeholder="225" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.water}}" data-scope="recipeForm" bindinput="onRecipeWaterInput" /><text class="param-unit">g</text></label>
               </view>
             </view>
             <text class="param-group-title">器具与研磨</text>
             <view class="param-card">
-              <label class="param-card-row"><text>滤杯</text><input id="recipe-dripper" placeholder="例：Hario V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dripper}}" data-field="dripper" bindinput="onRecipeFormInput" /></label>
-              <label class="param-card-row"><text>磨豆机</text><input id="recipe-grinder" placeholder="例：C40" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grinder}}" data-field="grinder" bindinput="onRecipeFormInput" /></label>
-              <label class="param-card-row"><text>研磨度</text><input id="recipe-grind" placeholder="例：24" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grind}}" data-field="grind" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>滤杯</text><input id="recipe-dripper" placeholder-class="bean-form-placeholder" placeholder="例：Hario V60" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.dripper}}" data-field="dripper" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>磨豆机</text><input id="recipe-grinder" placeholder-class="bean-form-placeholder" placeholder="例：C40" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grinder}}" data-field="grinder" bindinput="onRecipeFormInput" /></label>
+              <label class="param-card-row"><text>研磨度</text><input id="recipe-grind" placeholder-class="bean-form-placeholder" placeholder="例：24" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.grind}}" data-field="grind" bindinput="onRecipeFormInput" /></label>
             </view>
             <view class="param-card">
               <view class="param-card-row param-more-toggle {{recipeFormMoreOpen ? 'is-open' : ''}}" hover-class="param-step-button-hover" hover-stay-time="80" bindtap="toggleRecipeFormMore">
@@ -1890,13 +1890,13 @@
                 <text class="param-more-hint">{{recipeFormMoreOpen ? '收起' : ((recipeForm.waterQuality || recipeForm.filterPaper) ? '已填写' : '水质 · 滤纸')}}<text class="param-more-arrow">⌄</text></text>
               </view>
               <block wx:if="{{recipeFormMoreOpen}}">
-                <label class="param-card-row"><text>水质</text><input id="recipe-water-quality" placeholder="例：农夫山泉" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.waterQuality}}" data-field="waterQuality" bindinput="onRecipeFormInput" /></label>
-                <label class="param-card-row"><text>滤纸</text><input id="recipe-filter-paper" placeholder="例：Hario 01" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.filterPaper}}" data-field="filterPaper" bindinput="onRecipeFormInput" /></label>
+                <label class="param-card-row"><text>水质</text><input id="recipe-water-quality" placeholder-class="bean-form-placeholder" placeholder="例：农夫山泉" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.waterQuality}}" data-field="waterQuality" bindinput="onRecipeFormInput" /></label>
+                <label class="param-card-row"><text>滤纸</text><input id="recipe-filter-paper" placeholder-class="bean-form-placeholder" placeholder="例：Hario 01" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.filterPaper}}" data-field="filterPaper" bindinput="onRecipeFormInput" /></label>
               </block>
             </view>
             <text class="param-group-title">备注</text>
-            <view class="param-card recipe-form-notes">
-              <textarea id="recipe-notes" class="recipe-form-notes-input" auto-height adjust-position="{{false}}" fixed="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="风格、注意事项等" value="{{recipeForm.target}}" data-field="target" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" />
+            <view class="param-card bean-form-flavor-card">
+              <textarea id="recipe-notes" placeholder-class="bean-form-placeholder" class="bean-form-flavor-input" auto-height adjust-position="{{false}}" fixed="{{true}}" cursor-spacing="24" show-confirm-bar="{{false}}" placeholder="风格、注意事项等" value="{{recipeForm.target}}" data-field="target" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" bindinput="onRecipeFormInput" />
             </view>
           </view>
           <view class="steps-section-card param-steps">
@@ -1905,7 +1905,7 @@
               <view class="param-time-head">
                 <label class="param-time-main">
                   <text class="param-core-label">总时间 · 点击修改</text>
-                  <input id="recipe-total-time" class="param-time-input" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.totalTime}}" data-field="totalTime" bindinput="onRecipeFormInput" placeholder="2:00" />
+                  <input id="recipe-total-time" placeholder-class="bean-form-placeholder" class="param-time-input" adjust-position="{{false}}" always-embed="{{true}}" cursor-spacing="24" cursor="{{parameterInputCursor}}" bindfocus="onParameterInputFocus" bindblur="onParameterInputBlur" bindkeyboardheightchange="onParameterKeyboardHeightChange" value="{{recipeForm.totalTime}}" data-field="totalTime" bindinput="onRecipeFormInput" placeholder="2:00" />
                 </label>
                 <view class="param-time-summary">
                   <text>{{recipeForm.stages.length}} 个步骤</text>
@@ -2161,7 +2161,7 @@
             <text class="mine-menu-chevron">›</text>
           </view>
         </view>
-        <text class="mine-version">Pour Notes · v2.2.2</text>
+        <text class="mine-version">Pour Notes · v2.3.0</text>
       </view>
 
       <view wx:else class="mine-buying-guide">
