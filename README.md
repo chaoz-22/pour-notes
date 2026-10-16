@@ -104,13 +104,13 @@ node scripts/export-roaster-catalog.js
 python3 sync/run.py
 ```
 
-对某一家执行完整同步（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY` 和 `DEEPSEEK_API_KEY`（把官网信息整理成中文用的是 DeepSeek）：
+对某一家执行完整同步（会写云端数据库和云存储）。需要先 `pip install -r sync/requirements.txt`，并在 `sync/.env` 或环境变量里配置 `CLOUDBASE_API_KEY`、`DEEPSEEK_API_KEY` 和 `ANTHROPIC_API_KEY`（把官网信息整理成中文用的是 DeepSeek；Aery 的商品介绍是图片，先用 Claude 读出图里的文字）：
 
 ```bash
 python3 sync/run.py --roaster Sey --apply
 ```
 
-GitHub Actions 每周一自动对全部已接入的烘焙商执行一次 `--apply`，两把密钥放在仓库的 Secrets 里。官网找不到的豆子会被下架（`enabled: false`，数据保留，官网重新出现时自动恢复）；官网页面还在、只是售罄的保持显示。想手动下架某款，在控制台把它的 `enabled` 改成 `false` 即可，脚本不会替你恢复。
+GitHub Actions 每周一自动对全部已接入的烘焙商执行一次 `--apply`，三把密钥放在仓库的 Secrets 里。官网找不到的豆子会被下架（`enabled: false`，数据保留，官网重新出现时自动恢复）；官网页面还在、只是售罄的保持显示。想手动下架某款，在控制台把它的 `enabled` 改成 `false` 即可，脚本不会替你恢复。
 
 改完豆袋字段解析规则后，跑一遍解析测试：
 

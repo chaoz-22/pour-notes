@@ -8,8 +8,8 @@
     python3 sync/run.py --cache                # 本地调试：官网数据缓存到 sync/.cache/
 
 配置了 CLOUDBASE_API_KEY（环境变量或 sync/.env）时读云端数据库，否则读本地的
-cloud-data/roaster_guide_beans.json。--apply 还需要 DEEPSEEK_API_KEY 和
-sync/requirements.txt 里的依赖。
+cloud-data/roaster_guide_beans.json。--apply 还需要 DEEPSEEK_API_KEY、
+ANTHROPIC_API_KEY（读 Aery 这类图片形式的商品介绍）和 sync/requirements.txt 里的依赖。
 
 --apply 做四件事：官网找不到的豆子下架（数据保留，官网重新出现时自动恢复）；
 已有豆子补记官网链接；上线官网的新豆；对照官网核对已有豆子并改正写错的字段。
